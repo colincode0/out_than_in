@@ -1,0 +1,15 @@
+Overall goal:
+
+Our goal is to make a homegrown simple like instagram like app. We want to be able to upload images and text, and have them in a chronological feed with pagination.
+
+We are thinking Vercel blob storage will be best, as we will be hosting the frontend on Vercel
+
+We want simple google auth, with only one email whitelisted. This will be the only way to sign up and post.
+
+When we post an image, we want it to recognize the metadata timestamp, but then we want to scrup all metadata from the image before uploading it to the blob storage.
+
+The images should display their metadata timestamp, and have the option for a caption.
+
+There should also be a way to post a text only post.
+
+We want to add pagination, showing only the latest 10 posts.

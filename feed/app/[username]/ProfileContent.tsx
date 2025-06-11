@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { Post } from "../types";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
@@ -16,7 +16,7 @@ interface ProfileContentProps {
 
 export default function ProfileContent({ params }: ProfileContentProps) {
   const { username } = use(params);
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,33 +25,56 @@ export default function ProfileContent({ params }: ProfileContentProps) {
   const [editingCaption, setEditingCaption] = useState<string | null>(null);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   const isOwnProfile = session?.user?.email?.split("@")[0] === username;
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
+    if (!hasMore || isLoading) return;
+
     try {
-      const response = await fetch(`/api/posts?username=${username}`);
+      const response = await fetch(
+        `/api/posts?username=${username}&page=${page}`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch posts");
       }
+
       const data = await response.json();
-      // Sort posts by postDate in descending order (newest first)
-      const sortedPosts = data.sort(
-        (a: Post, b: Post) =>
-          new Date(b.postDate).getTime() - new Date(a.postDate).getTime()
-      );
-      setPosts(sortedPosts);
+      setPosts((prev) => [...prev, ...data.posts]);
+      setHasMore(data.posts.length === 10);
+      setPage((prev) => prev + 1);
     } catch (err) {
       console.error("Error fetching posts:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch posts");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [username, page, hasMore, isLoading]);
 
   useEffect(() => {
-    fetchPosts();
-  }, [username]);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          fetchPosts();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [fetchPosts, hasMore, isLoading]);
 
   const handlePostComplete = (post: Post) => {
     setPosts((prev) => [post, ...prev]);

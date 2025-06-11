@@ -47,9 +47,11 @@ export async function GET(request: Request) {
         settings = await kv.get<UserSettings>(`user:${profile.email}:settings`);
       } else {
         // Check if the current user is following this profile
-        isFollowing = await kv.sismember(
-          `user:${session.user.email}:following`,
-          profile.username
+        isFollowing = Boolean(
+          await kv.sismember(
+            `user:${session.user.email}:following`,
+            profile.username
+          )
         );
       }
     }

@@ -47,9 +47,11 @@ export async function GET(request: Request) {
         settings = await kv.get<UserSettings>(`user:${profile.email}:settings`);
       } else {
         // Check if the current user is following this profile
-        isFollowing = await kv.sismember(
-          `user:${session.user.email}:following`,
-          profile.username
+        isFollowing = Boolean(
+          await kv.sismember(
+            `user:${session.user.email}:following`,
+            profile.username
+          )
         );
       }
     }
@@ -80,6 +82,15 @@ export async function POST(request: Request) {
     const { username, bio } = await request.json();
     const email = session.user.email;
     const now = new Date().toISOString();
+
+    // Check for reserved usernames
+    const reservedUsernames = ["explore", "leaderboard", "feed"];
+    if (reservedUsernames.includes(username.toLowerCase())) {
+      return NextResponse.json(
+        { error: "This username is reserved" },
+        { status: 400 }
+      );
+    }
 
     // Check if username is already taken
     const existingProfile = await kv.get<UserProfile>(

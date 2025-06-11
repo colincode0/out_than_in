@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { Post } from "@/app/types";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function FeedPage({
   params,
@@ -28,6 +29,11 @@ export default function FeedPage({
       try {
         const response = await fetch(`/api/feed?username=${username}`);
         if (!response.ok) {
+          if (response.status === 404) {
+            // User isn't following anyone, set empty posts array
+            setPosts([]);
+            return;
+          }
           throw new Error("Failed to fetch feed");
         }
         const data = await response.json();
@@ -65,56 +71,86 @@ export default function FeedPage({
 
   if (posts.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-xl text-gray-400">
-          No posts to show yet. Follow some users to see their posts here!
-        </p>
+      <div className="min-h-screen p-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex justify-center mb-8">
+            <Link
+              href={`/${username}`}
+              className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
+            >
+              Back to @{username}
+            </Link>
+          </div>
+          <div className="text-center">
+            <p className="text-xl text-gray-400">
+              @{username} is not following anyone yet
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-8">
-      <h1 className="text-2xl font-bold mb-6">Following Feed</h1>
-      {posts.map((post) => (
-        <div
-          key={post.id}
-          className="bg-background border border-gray-800 rounded-lg overflow-hidden"
-        >
-          {post.type === "image" && (
-            <div className="relative aspect-square">
-              <Image
-                src={post.url}
-                alt={post.caption || "Post image"}
-                fill
-                className="object-cover"
-              />
-            </div>
-          )}
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="font-medium">@{post.username}</span>
-              <span className="text-gray-400">•</span>
-              <span className="text-gray-400">
-                {new Date(post.postDate).toLocaleDateString()}
-              </span>
-            </div>
-            {post.type === "image" && post.caption && (
-              <p className="text-gray-300 mb-2">{post.caption}</p>
-            )}
-            {post.type === "text" && (
-              <p className="text-gray-300 whitespace-pre-wrap">
-                {post.content}
-              </p>
-            )}
-            {post.type === "image" && post.captureDate && (
-              <p className="text-sm text-gray-500">
-                Captured: {new Date(post.captureDate).toLocaleString()}
-              </p>
-            )}
-          </div>
+    <div className="min-h-screen p-4">
+      <div className="max-w-2xl mx-auto">
+        <div className="flex justify-center mb-8">
+          <Link
+            href={`/${username}`}
+            className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
+          >
+            Back to @{username}
+          </Link>
         </div>
-      ))}
+
+        <div className="space-y-8">
+          <h1 className="text-2xl font-bold mb-6">Following Feed</h1>
+          {posts.map((post) => (
+            <div
+              key={post.id}
+              className="bg-background border border-gray-800 rounded-lg overflow-hidden"
+            >
+              {post.type === "image" && (
+                <div className="relative aspect-square">
+                  <Image
+                    src={post.url}
+                    alt={post.caption || "Post image"}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Link
+                    href={`/${post.username}`}
+                    className="font-medium hover:text-gray-300 transition-colors"
+                  >
+                    @{post.username}
+                  </Link>
+                  <span className="text-gray-400">•</span>
+                  <span className="text-gray-400">
+                    {new Date(post.postDate).toLocaleDateString()}
+                  </span>
+                </div>
+                {post.type === "image" && post.caption && (
+                  <p className="text-gray-300 mb-2">{post.caption}</p>
+                )}
+                {post.type === "text" && (
+                  <p className="text-gray-300 whitespace-pre-wrap">
+                    {post.content}
+                  </p>
+                )}
+                {post.type === "image" && post.captureDate && (
+                  <p className="text-sm text-gray-500">
+                    Captured: {new Date(post.captureDate).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

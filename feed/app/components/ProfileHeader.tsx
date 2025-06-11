@@ -8,6 +8,7 @@ interface ProfileHeaderProps {
   profile: UserProfile;
   onProfileUpdate?: () => void;
   following: number;
+  followers: number;
   isFollowing: boolean;
 }
 
@@ -15,6 +16,7 @@ export default function ProfileHeader({
   profile,
   onProfileUpdate,
   following,
+  followers,
   isFollowing: initialIsFollowing,
 }: ProfileHeaderProps) {
   const { data: session } = useSession();
@@ -133,6 +135,8 @@ export default function ProfileHeader({
               <h1 className="text-2xl font-bold">@{profile.username}</h1>
               <div className="mt-2 text-sm text-gray-400">
                 <span>{following} following</span>
+                <span className="mx-2">•</span>
+                <span>{followers} followers</span>
               </div>
             </div>
             <div className="flex gap-2">

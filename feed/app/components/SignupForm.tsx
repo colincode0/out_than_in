@@ -68,7 +68,7 @@ export default function SignupForm() {
       }
 
       const data = await response.json();
-      router.push(`/${data.username}`);
+      router.push(`/@${data.username}`);
     } catch (err) {
       console.error("Error creating profile:", err);
       setError(err instanceof Error ? err.message : "Failed to create profile");

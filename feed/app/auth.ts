@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { User } from "next-auth";
 
 const NEXTAUTH_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
@@ -19,7 +18,7 @@ export const authConfig = {
     }),
   ],
   callbacks: {
-    async signIn({ user }: { user: User }) {
+    async signIn() {
       // For now, allow any Google account to sign in
       return true;
     },

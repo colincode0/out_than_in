@@ -2,7 +2,6 @@ import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/app/auth";
-import exifr from "exifr";
 import sharp from "sharp";
 
 export async function POST(request: Request) {
@@ -22,7 +21,6 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
-    const caption = formData.get("caption") as string | null;
 
     if (!file) {
       console.log("No file provided in request");
@@ -30,25 +28,10 @@ export async function POST(request: Request) {
     }
 
     console.log("Processing file:", file.name, "Size:", file.size);
-    if (caption && caption.trim()) {
-      console.log("Caption provided:", caption);
-    }
 
     // Read the file as ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-
-    // Extract metadata before processing
-    let metadataTimestamp: string | null = null;
-    try {
-      const exifData = await exifr.parse(buffer);
-      if (exifData?.DateTimeOriginal) {
-        metadataTimestamp = new Date(exifData.DateTimeOriginal).toISOString();
-        console.log("Extracted timestamp from metadata:", metadataTimestamp);
-      }
-    } catch (exifError) {
-      console.log("No EXIF data found or error reading EXIF:", exifError);
-    }
 
     // Process image to remove metadata
     const processedImageBuffer = await sharp(buffer)
@@ -64,27 +47,16 @@ export async function POST(request: Request) {
     console.log("Generated filename:", filename);
 
     try {
-      // Upload the image with caption in headers
+      // Upload the image
       console.log("Uploading image to blob storage...");
       const blob = await put(filename, processedImageBuffer, {
         access: "public",
         addRandomSuffix: true,
         contentType: file.type,
-        headers: {
-          "x-caption": caption?.trim() || "",
-          "x-timestamp": metadataTimestamp || new Date().toISOString(),
-        },
       });
       console.log("Image uploaded successfully:", blob.url);
 
-      const response = {
-        ...blob,
-        metadataTimestamp: metadataTimestamp || new Date().toISOString(),
-        caption: caption?.trim() || undefined,
-      };
-      console.log("Sending response:", response);
-
-      return NextResponse.json(response);
+      return NextResponse.json(blob);
     } catch (blobError) {
       console.error("Blob storage error:", blobError);
       throw new Error(

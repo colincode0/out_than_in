@@ -1,4 +1,4 @@
-import { list, put } from "@vercel/blob";
+import { list } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/app/auth";
@@ -20,52 +20,29 @@ export async function GET() {
     console.log("Found blobs:", blobs.length);
 
     const posts = await Promise.all(
-      blobs
-        .filter((blob) => !blob.pathname.endsWith(".json"))
-        .map(async (blob) => {
-          console.log("Processing blob:", blob.pathname);
-          const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(blob.pathname);
-          const isText = blob.pathname.startsWith("post-");
+      blobs.map(async (blob) => {
+        console.log("Processing blob:", blob.pathname);
+        const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(blob.pathname);
+        const isText = blob.pathname.startsWith("post-");
 
-          if (isText) {
-            const response = await fetch(blob.url);
-            const content = await response.text();
-            return {
-              url: blob.url,
-              content,
-              timestamp: blob.uploadedAt,
-              type: "text" as const,
-            };
-          } else if (isImage) {
-            // Fetch the blob to get its headers
-            const response = await fetch(blob.url);
-            console.log("Response headers for", blob.pathname, ":", {
-              all: Object.fromEntries(response.headers.entries()),
-              caption: response.headers.get("x-caption"),
-              timestamp: response.headers.get("x-timestamp"),
-            });
-
-            const caption = response.headers.get("x-caption") || undefined;
-            const metadataTimestamp =
-              response.headers.get("x-timestamp") || undefined;
-
-            console.log("Image metadata:", {
-              pathname: blob.pathname,
-              caption,
-              metadataTimestamp,
-              hasCaption: !!caption,
-            });
-
-            return {
-              url: blob.url,
-              timestamp: blob.uploadedAt,
-              type: "image" as const,
-              caption,
-              metadataTimestamp,
-            };
-          }
-          return null;
-        })
+        if (isText) {
+          const response = await fetch(blob.url);
+          const content = await response.text();
+          return {
+            url: blob.url,
+            content,
+            timestamp: blob.uploadedAt,
+            type: "text" as const,
+          };
+        } else if (isImage) {
+          return {
+            url: blob.url,
+            timestamp: blob.uploadedAt,
+            type: "image" as const,
+          };
+        }
+        return null;
+      })
     );
 
     const validPosts = posts.filter(

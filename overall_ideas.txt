@@ -1,0 +1,4 @@
+no display of followers, what if there was a leaderboard like top followed accounts
+
+and then for each user it has a # like #1582
+ - which would mean the #1582 most followed account

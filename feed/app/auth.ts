@@ -9,6 +9,13 @@ export const authConfig = {
     GoogleProvider({
       clientId: process.env.GOOGLE_ID!,
       clientSecret: process.env.GOOGLE_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+        },
+      },
     }),
   ],
   callbacks: {
@@ -24,6 +31,7 @@ export const authConfig = {
   basePath: "/api/auth",
   baseUrl: NEXTAUTH_URL,
   url: NEXTAUTH_URL,
+  debug: process.env.NODE_ENV === "development",
 };
 
 const handler = NextAuth(authConfig);

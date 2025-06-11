@@ -10,6 +10,8 @@ interface Post {
   content?: string;
   timestamp: string;
   type: "text" | "image";
+  uploadTimestamp?: string;
+  exifTimestamp?: string | null;
 }
 
 export default function Home() {
@@ -35,16 +37,20 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (session) {
-      fetchPosts();
-    }
-  }, [session]);
+    fetchPosts();
+  }, []);
 
-  const handleImagePost = (url: string) => {
+  const handleImagePost = (
+    url: string,
+    uploadTimestamp: string,
+    exifTimestamp: string | null
+  ) => {
     setPosts((prev) => [
       {
         url,
-        timestamp: new Date().toISOString(),
+        timestamp: uploadTimestamp,
+        uploadTimestamp,
+        exifTimestamp,
         type: "image",
       },
       ...prev,
@@ -85,46 +91,55 @@ export default function Home() {
           )}
         </div>
 
-        {session && (
-          <div className="w-full">
-            {isLoading ? (
-              <div>Loading posts...</div>
-            ) : error ? (
-              <div className="text-red-500">{error}</div>
-            ) : posts.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 w-full">
-                {posts.map((post, index) => (
-                  <div key={index} className="border rounded-lg p-4">
-                    {post.type === "text" ? (
-                      <div className="flex flex-col gap-2">
-                        <p className="whitespace-pre-wrap">{post.content}</p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(post.timestamp).toLocaleString()}
+        <div className="w-full">
+          {isLoading ? (
+            <div>Loading posts...</div>
+          ) : error ? (
+            <div className="text-red-500">{error}</div>
+          ) : posts.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 w-full">
+              {posts.map((post, index) => (
+                <div key={index} className="border rounded-lg p-4">
+                  {post.type === "text" ? (
+                    <div className="flex flex-col gap-2">
+                      <p className="whitespace-pre-wrap">{post.content}</p>
+                      <p className="text-sm text-gray-500">
+                        {new Date(post.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <div className="relative aspect-square">
+                        <Image
+                          src={post.url}
+                          alt={`Uploaded image ${index + 1}`}
+                          fill
+                          className="object-cover rounded-lg"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1 text-sm text-gray-500">
+                        <p>
+                          Posted:{" "}
+                          {new Date(
+                            post.uploadTimestamp || post.timestamp
+                          ).toLocaleString()}
                         </p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        <div className="relative aspect-square">
-                          <Image
-                            src={post.url}
-                            alt={`Uploaded image ${index + 1}`}
-                            fill
-                            className="object-cover rounded-lg"
-                          />
-                          <p className="absolute bottom-2 right-2 text-sm text-white bg-black/50 px-2 py-1 rounded">
-                            {new Date(post.timestamp).toLocaleString()}
+                        {post.exifTimestamp && (
+                          <p>
+                            Taken:{" "}
+                            {new Date(post.exifTimestamp).toLocaleString()}
                           </p>
-                        </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div>No posts yet</div>
-            )}
-          </div>
-        )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div>No posts yet</div>
+          )}
+        </div>
       </main>
     </div>
   );

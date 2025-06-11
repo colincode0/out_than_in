@@ -4,7 +4,11 @@ import { useState } from "react";
 import Image from "next/image";
 
 interface ImageUploadProps {
-  onUploadComplete?: (url: string, metadataTimestamp: string) => void;
+  onUploadComplete?: (
+    url: string,
+    uploadTimestamp: string,
+    exifTimestamp: string | null
+  ) => void;
 }
 
 export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
@@ -49,7 +53,7 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
       }
 
       setUploadedUrl(data.url);
-      onUploadComplete?.(data.url, data.metadataTimestamp);
+      onUploadComplete?.(data.url, data.uploadTimestamp, data.exifTimestamp);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to upload image";

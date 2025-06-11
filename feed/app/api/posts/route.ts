@@ -5,16 +5,6 @@ import { authConfig } from "@/app/auth";
 
 export async function GET() {
   console.log("GET /api/posts - Starting request");
-  const session = await getServerSession(authConfig);
-  console.log(
-    "Session status:",
-    session ? "Authenticated" : "Not authenticated"
-  );
-
-  if (!session) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
   try {
     const { blobs } = await list();
     console.log("Found blobs:", blobs.length);

@@ -2,6 +2,7 @@ import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/app/auth";
+import exifr from "exifr";
 import sharp from "sharp";
 
 export async function POST(request: Request) {
@@ -33,6 +34,18 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    // Extract EXIF data before processing
+    let exifTimestamp: string | null = null;
+    try {
+      const exifData = await exifr.parse(buffer);
+      if (exifData?.DateTimeOriginal) {
+        exifTimestamp = new Date(exifData.DateTimeOriginal).toISOString();
+        console.log("Extracted timestamp from EXIF:", exifTimestamp);
+      }
+    } catch (exifError) {
+      console.log("No EXIF data found or error reading EXIF:", exifError);
+    }
+
     // Process image to remove metadata
     const processedImageBuffer = await sharp(buffer)
       .withMetadata() // Remove all metadata
@@ -56,7 +69,14 @@ export async function POST(request: Request) {
       });
       console.log("Image uploaded successfully:", blob.url);
 
-      return NextResponse.json(blob);
+      const response = {
+        ...blob,
+        uploadTimestamp: new Date().toISOString(),
+        exifTimestamp: exifTimestamp || null,
+      };
+      console.log("Sending response:", response);
+
+      return NextResponse.json(response);
     } catch (blobError) {
       console.error("Blob storage error:", blobError);
       throw new Error(

@@ -37,10 +37,8 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (session) {
-      fetchPosts();
-    }
-  }, [session]);
+    fetchPosts();
+  }, []);
 
   const handlePostComplete = (post: Post) => {
     setPosts((prev) => [post, ...prev]);
@@ -113,47 +111,47 @@ export default function Home() {
           )}
         </div>
 
-        {session && (
-          <div className="w-full">
-            {isLoading ? (
-              <div>Loading posts...</div>
-            ) : error ? (
-              <div className="text-red-500">{error}</div>
-            ) : posts.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 w-full">
-                {posts.map((post) => (
-                  <div
-                    key={post.id}
-                    className="border rounded-lg p-4 relative group"
-                  >
-                    {post.type === "text" ? (
-                      <div className="flex flex-col gap-2">
-                        <p className="whitespace-pre-wrap">{post.content}</p>
-                        <p className="text-sm text-gray-500">
-                          Posted: {formatDate(post.postDate)}
-                        </p>
+        <div className="w-full">
+          {isLoading ? (
+            <div>Loading posts...</div>
+          ) : error ? (
+            <div className="text-red-500">{error}</div>
+          ) : posts.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 w-full">
+              {posts.map((post) => (
+                <div
+                  key={post.id}
+                  className="border rounded-lg p-4 relative group"
+                >
+                  {post.type === "text" ? (
+                    <div className="flex flex-col gap-2">
+                      <p className="whitespace-pre-wrap">{post.content}</p>
+                      <p className="text-sm text-gray-500">
+                        Posted: {formatDate(post.postDate)}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <div className="relative aspect-square">
+                        <Image
+                          src={post.url}
+                          alt={post.caption || "Uploaded image"}
+                          fill
+                          className="object-cover rounded-lg"
+                        />
                       </div>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        <div className="relative aspect-square">
-                          <Image
-                            src={post.url}
-                            alt={post.caption || "Uploaded image"}
-                            fill
-                            className="object-cover rounded-lg"
-                          />
-                        </div>
-                        {post.caption && (
-                          <p className="text-sm">{post.caption}</p>
+                      {post.caption && (
+                        <p className="text-sm">{post.caption}</p>
+                      )}
+                      <div className="flex flex-col gap-1 text-sm text-gray-500">
+                        <p>Posted: {formatDate(post.postDate)}</p>
+                        {post.captureDate && (
+                          <p>Taken: {formatDate(post.captureDate)}</p>
                         )}
-                        <div className="flex flex-col gap-1 text-sm text-gray-500">
-                          <p>Posted: {formatDate(post.postDate)}</p>
-                          {post.captureDate && (
-                            <p>Taken: {formatDate(post.captureDate)}</p>
-                          )}
-                        </div>
                       </div>
-                    )}
+                    </div>
+                  )}
+                  {session && (
                     <button
                       onClick={() => handleDeleteClick(post)}
                       className="absolute top-2 right-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
@@ -172,14 +170,14 @@ export default function Home() {
                         />
                       </svg>
                     </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div>No posts yet</div>
-            )}
-          </div>
-        )}
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div>No posts yet</div>
+          )}
+        </div>
       </main>
 
       <DeleteConfirmationModal

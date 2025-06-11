@@ -132,6 +132,7 @@ export async function DELETE(request: Request) {
 
     // Delete from KV
     await kv.del(`post:${id}`);
+    await kv.del(`order:${id}`);
     await kv.zrem("posts", id);
 
     console.log("Successfully deleted post:", id);

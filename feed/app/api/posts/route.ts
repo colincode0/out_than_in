@@ -1,4 +1,4 @@
-import { list } from "@vercel/blob";
+import { list, put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/app/auth";

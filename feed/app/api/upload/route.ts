@@ -32,6 +32,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    // Check file size (10MB limit)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > MAX_FILE_SIZE) {
+      console.log("File too large:", file.size);
+      return NextResponse.json(
+        { error: "File size must be less than 10MB" },
+        { status: 400 }
+      );
+    }
+
     console.log("Processing file:", file.name, "Size:", file.size);
 
     // Read the file as ArrayBuffer
@@ -52,10 +62,34 @@ export async function POST(request: Request) {
       console.log("No EXIF data found or error reading EXIF:", exifError);
     }
 
-    // Process image to remove metadata
-    const processedImageBuffer = await sharp(buffer)
-      .withMetadata() // Remove all metadata
-      .toBuffer();
+    // Process image to remove metadata and resize if needed
+    let processedImageBuffer: Buffer;
+    try {
+      const image = sharp(buffer);
+      const metadata = await image.metadata();
+
+      // If image is larger than 2000px in either dimension, resize it
+      if (
+        (metadata.width && metadata.width > 2000) ||
+        (metadata.height && metadata.height > 2000)
+      ) {
+        processedImageBuffer = await image
+          .resize(2000, 2000, {
+            fit: "inside",
+            withoutEnlargement: true,
+          })
+          .withMetadata()
+          .toBuffer();
+      } else {
+        processedImageBuffer = await image.withMetadata().toBuffer();
+      }
+    } catch (sharpError) {
+      console.error("Error processing image:", sharpError);
+      return NextResponse.json(
+        { error: "Error processing image" },
+        { status: 500 }
+      );
+    }
 
     // Generate a unique filename and ID
     const timestamp = Date.now();

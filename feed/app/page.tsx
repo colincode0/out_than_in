@@ -199,7 +199,9 @@ export default function Home() {
                       {(post.caption || post.captureDate) && (
                         <div className="flex flex-col gap-1 text-sm text-gray-500 px-4 py-3 border-t border-gray-800">
                           {post.caption && (
-                            <p className="text-sm">{post.caption}</p>
+                            <p className="text-sm whitespace-pre-wrap">
+                              {post.caption}
+                            </p>
                           )}
                           <div className="flex flex-col gap-1">
                             <p>Posted: {formatDate(post.postDate)}</p>

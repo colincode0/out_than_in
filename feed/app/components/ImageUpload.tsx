@@ -140,12 +140,11 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
           </div>
 
           <div className="flex flex-col gap-2 w-full">
-            <input
-              type="text"
+            <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Add a caption..."
-              className="w-full p-2 rounded-lg border border-gray-700 bg-background text-foreground"
+              className="w-full p-2 rounded-lg border border-gray-700 bg-background text-foreground resize-none min-h-[80px]"
               disabled={isUploading}
             />
 

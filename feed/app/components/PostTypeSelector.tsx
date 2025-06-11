@@ -85,9 +85,19 @@ export default function PostTypeSelector({
       </button>
 
       {selectedType === "image" ? (
-        <ImageUpload onUploadComplete={onPostComplete} />
+        <ImageUpload
+          onUploadComplete={(post) => {
+            onPostComplete(post);
+            setSelectedType(null);
+          }}
+        />
       ) : (
-        <TextPost onPostComplete={onPostComplete} />
+        <TextPost
+          onPostComplete={(post) => {
+            onPostComplete(post);
+            setSelectedType(null);
+          }}
+        />
       )}
     </div>
   );

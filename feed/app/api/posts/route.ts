@@ -169,12 +169,12 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const { hidden } = await request.json();
+    const { hidden, caption } = await request.json();
 
-    if (typeof hidden !== "boolean") {
-      console.log("Invalid hidden value provided");
+    if (typeof hidden !== "boolean" && typeof caption !== "string") {
+      console.log("Invalid update values provided");
       return NextResponse.json(
-        { error: "Hidden value must be a boolean" },
+        { error: "Update values must be valid" },
         { status: 400 }
       );
     }
@@ -185,8 +185,12 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
-    // Update post with new hidden status
-    const updatedPost = { ...post, hidden };
+    // Update post with new values
+    const updatedPost = {
+      ...post,
+      ...(typeof hidden === "boolean" && { hidden }),
+      ...(typeof caption === "string" && post.type === "image" && { caption }),
+    };
     await kv.set(`post:${id}`, updatedPost);
 
     console.log("Successfully updated post:", id);

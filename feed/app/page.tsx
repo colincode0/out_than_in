@@ -14,6 +14,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
+  const [editingCaption, setEditingCaption] = useState<string | null>(null);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
 
   const fetchPosts = async () => {
     try {
@@ -90,6 +92,30 @@ export default function Home() {
     } catch (err) {
       console.error("Error updating post:", err);
       alert("Failed to update post. Please try again.");
+    }
+  };
+
+  const handleEditCaption = async (post: Post, newCaption: string) => {
+    try {
+      const response = await fetch(`/api/posts?id=${post.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ caption: newCaption }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update caption");
+      }
+
+      const updatedPost = await response.json();
+      setPosts((prev) => prev.map((p) => (p.id === post.id ? updatedPost : p)));
+      setEditingCaption(null);
+      setEditingPostId(null);
+    } catch (err) {
+      console.error("Error updating caption:", err);
+      alert("Failed to update caption. Please try again.");
     }
   };
 
@@ -196,82 +222,148 @@ export default function Home() {
                           className="object-cover"
                         />
                       </div>
-                      {(post.caption || post.captureDate) && (
+                      {(post.caption ||
+                        post.captureDate ||
+                        editingPostId === post.id) && (
                         <div className="flex flex-col gap-1 text-sm text-gray-500 px-4 py-3 border-t border-gray-800">
-                          {post.caption && (
-                            <p className="text-sm whitespace-pre-wrap">
-                              {post.caption}
-                            </p>
+                          {editingPostId === post.id ? (
+                            <div className="flex flex-col gap-2">
+                              <textarea
+                                value={editingCaption || post.caption || ""}
+                                onChange={(e) =>
+                                  setEditingCaption(e.target.value)
+                                }
+                                className="w-full p-2 rounded-lg border border-gray-700 bg-background text-foreground resize-none min-h-[80px]"
+                                placeholder="Add a caption..."
+                              />
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => {
+                                    setEditingCaption(null);
+                                    setEditingPostId(null);
+                                  }}
+                                  className="px-3 py-1 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleEditCaption(
+                                      post,
+                                      editingCaption || ""
+                                    )
+                                  }
+                                  className="px-3 py-1 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+                                >
+                                  Save
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              {post.caption && (
+                                <div className="flex justify-between items-start gap-2">
+                                  <p className="text-sm whitespace-pre-wrap flex-1">
+                                    {post.caption}
+                                  </p>
+                                  {session && (
+                                    <button
+                                      onClick={() => {
+                                        setEditingCaption(post.caption || "");
+                                        setEditingPostId(post.id);
+                                      }}
+                                      className="p-1 rounded-full hover:bg-gray-800 transition-colors"
+                                      title="Edit caption"
+                                    >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                        />
+                                      </svg>
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                              <div className="flex flex-col gap-1">
+                                <p>Posted: {formatDate(post.postDate)}</p>
+                                {post.captureDate && (
+                                  <p>Taken: {formatDate(post.captureDate)}</p>
+                                )}
+                              </div>
+                            </>
                           )}
-                          <div className="flex flex-col gap-1">
-                            <p>Posted: {formatDate(post.postDate)}</p>
-                            {post.captureDate && (
-                              <p>Taken: {formatDate(post.captureDate)}</p>
-                            )}
-                          </div>
                         </div>
                       )}
-                    </div>
-                  )}
-                  {session && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleToggleHidden(post)}
-                        className="absolute top-2 left-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-gray-700 text-white p-2 rounded-full hover:bg-gray-600"
-                        title={post.hidden ? "Unhide post" : "Hide post"}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <g>
-                            {post.hidden ? (
-                              <>
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                />
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                />
-                              </>
-                            ) : (
+                      {session && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleToggleHidden(post)}
+                            className="absolute top-2 left-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-gray-700 text-white p-2 rounded-full hover:bg-gray-600"
+                            title={post.hidden ? "Unhide post" : "Hide post"}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <g>
+                                {post.hidden ? (
+                                  <>
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                    />
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                    />
+                                  </>
+                                ) : (
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                                  />
+                                )}
+                              </g>
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(post)}
+                            className="absolute top-2 right-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
+                            title="Delete post"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
                               <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                                fillRule="evenodd"
+                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                clipRule="evenodd"
                               />
-                            )}
-                          </g>
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(post)}
-                        className="absolute top-2 right-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
-                        title="Delete post"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
+                            </svg>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

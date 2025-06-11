@@ -145,3 +145,57 @@ export async function DELETE(request: Request) {
     );
   }
 }
+
+export async function PATCH(request: Request) {
+  console.log("PATCH /api/posts - Starting update process");
+
+  try {
+    const session = await getServerSession(authConfig);
+    console.log(
+      "Session status:",
+      session ? "Authenticated" : "Not authenticated"
+    );
+
+    if (!session) {
+      console.log("Unauthorized request - no session");
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      console.log("No ID provided for update");
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
+
+    const { hidden } = await request.json();
+
+    if (typeof hidden !== "boolean") {
+      console.log("Invalid hidden value provided");
+      return NextResponse.json(
+        { error: "Hidden value must be a boolean" },
+        { status: 400 }
+      );
+    }
+
+    // Get current post data
+    const post = await kv.get<Post>(`post:${id}`);
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    // Update post with new hidden status
+    const updatedPost = { ...post, hidden };
+    await kv.set(`post:${id}`, updatedPost);
+
+    console.log("Successfully updated post:", id);
+    return NextResponse.json(updatedPost);
+  } catch (error) {
+    console.error("Error in PATCH /api/posts:", error);
+    return NextResponse.json(
+      { error: "Failed to update post" },
+      { status: 500 }
+    );
+  }
+}

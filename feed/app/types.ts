@@ -6,6 +6,7 @@ export interface PostMetadata {
   postDate: string;
   type: "image" | "text";
   content?: string;
+  hidden: boolean;
 }
 
 export interface TextPost extends PostMetadata {

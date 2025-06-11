@@ -70,6 +70,29 @@ export default function Home() {
     }
   };
 
+  const handleToggleHidden = async (post: Post) => {
+    try {
+      const response = await fetch(`/api/posts?id=${post.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ hidden: !post.hidden }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update post");
+      }
+
+      setPosts((prev) =>
+        prev.map((p) => (p.id === post.id ? { ...p, hidden: !p.hidden } : p))
+      );
+    } catch (err) {
+      console.error("Error updating post:", err);
+      alert("Failed to update post. Please try again.");
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString)
       .toLocaleString(undefined, {
@@ -84,31 +107,62 @@ export default function Home() {
       .replace(" at", " at");
   };
 
+  // Filter out hidden posts for non-authenticated users
+  const visiblePosts = session ? posts : posts.filter((post) => !post.hidden);
+
   return (
-    <div className="min-h-screen p-8">
-      <main className="max-w-4xl mx-auto">
-        <div className="flex flex-col items-center gap-4 mb-8">
-          {status === "loading" ? (
-            <div>Loading...</div>
-          ) : session ? (
-            <div className="flex flex-col items-center gap-4 w-full">
-              <p>Signed in as {session.user?.email}</p>
-              <PostTypeSelector onPostComplete={handlePostComplete} />
-              <button
-                onClick={() => signOut()}
-                className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-              >
-                Sign out
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => signIn("google")}
-              className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
+    <div className="min-h-screen p-4 sm:p-8">
+      <div className="fixed top-4 right-4 z-50">
+        {status === "loading" ? (
+          <div>Loading...</div>
+        ) : session ? (
+          <button
+            onClick={() => signOut()}
+            className="p-2 rounded-full hover:bg-gray-800 transition-colors"
+            title="Sign out"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              Sign in with Google
-            </button>
-          )}
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </svg>
+          </button>
+        ) : (
+          <button
+            onClick={() => signIn("google")}
+            className="p-2 rounded-full hover:bg-gray-800 transition-colors"
+            title="Sign in"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+              />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      <main className="max-w-4xl mx-auto">
+        <div className="flex flex-col items-center mb-8">
+          {session && <PostTypeSelector onPostComplete={handlePostComplete} />}
         </div>
 
         <div className="w-full">
@@ -116,60 +170,107 @@ export default function Home() {
             <div>Loading posts...</div>
           ) : error ? (
             <div className="text-red-500">{error}</div>
-          ) : posts.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 w-full">
-              {posts.map((post) => (
+          ) : visiblePosts.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 w-full">
+              {visiblePosts.map((post) => (
                 <div
                   key={post.id}
-                  className="border rounded-lg p-4 relative group"
+                  className={`relative group ${
+                    post.hidden ? "opacity-50" : ""
+                  }`}
                 >
                   {post.type === "text" ? (
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 p-4">
                       <p className="whitespace-pre-wrap">{post.content}</p>
                       <p className="text-sm text-gray-500">
                         Posted: {formatDate(post.postDate)}
                       </p>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col">
                       <div className="relative aspect-square">
                         <Image
                           src={post.url}
                           alt={post.caption || "Uploaded image"}
                           fill
-                          className="object-cover rounded-lg"
+                          className="object-cover"
                         />
                       </div>
-                      {post.caption && (
-                        <p className="text-sm">{post.caption}</p>
+                      {(post.caption || post.captureDate) && (
+                        <div className="flex flex-col gap-1 text-sm text-gray-500 px-4 py-3 border-t border-gray-800">
+                          {post.caption && (
+                            <p className="text-sm">{post.caption}</p>
+                          )}
+                          <div className="flex flex-col gap-1">
+                            <p>Posted: {formatDate(post.postDate)}</p>
+                            {post.captureDate && (
+                              <p>Taken: {formatDate(post.captureDate)}</p>
+                            )}
+                          </div>
+                        </div>
                       )}
-                      <div className="flex flex-col gap-1 text-sm text-gray-500">
-                        <p>Posted: {formatDate(post.postDate)}</p>
-                        {post.captureDate && (
-                          <p>Taken: {formatDate(post.captureDate)}</p>
-                        )}
-                      </div>
                     </div>
                   )}
                   {session && (
-                    <button
-                      onClick={() => handleDeleteClick(post)}
-                      className="absolute top-2 right-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
-                      title="Delete post"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleToggleHidden(post)}
+                        className="absolute top-2 left-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-gray-700 text-white p-2 rounded-full hover:bg-gray-600"
+                        title={post.hidden ? "Unhide post" : "Hide post"}
                       >
-                        <path
-                          fillRule="evenodd"
-                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <g>
+                            {post.hidden ? (
+                              <>
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
+                              </>
+                            ) : (
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                              />
+                            )}
+                          </g>
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(post)}
+                        className="absolute top-2 right-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
+                        title="Delete post"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   )}
                 </div>
               ))}

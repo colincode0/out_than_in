@@ -81,6 +81,15 @@ export async function POST(request: Request) {
     const email = session.user.email;
     const now = new Date().toISOString();
 
+    // Check for reserved usernames
+    const reservedUsernames = ["explore", "leaderboard", "feed"];
+    if (reservedUsernames.includes(username.toLowerCase())) {
+      return NextResponse.json(
+        { error: "This username is reserved" },
+        { status: 400 }
+      );
+    }
+
     // Check if username is already taken
     const existingProfile = await kv.get<UserProfile>(
       `username:${username}:profile`

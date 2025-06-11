@@ -2,24 +2,26 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const url = request.nextUrl.clone();
+  const pathname = url.pathname;
 
-  // If the path starts with /@, remove the @ and continue
-  if (pathname.startsWith("/@")) {
-    const newPathname = pathname.replace(/^\/@/, "/");
-    return NextResponse.rewrite(new URL(newPathname, request.url));
+  // Handle @leaderboard redirect
+  if (pathname === "/@leaderboard") {
+    url.pathname = "/explore/leaderboard";
+    return NextResponse.redirect(url);
   }
 
-  // If the path is a username without @ and not an API route, redirect to /@username
-  if (
-    !pathname.startsWith("/api") &&
-    !pathname.startsWith("/_next") &&
-    !pathname.startsWith("/static") &&
-    pathname !== "/" &&
-    !pathname.includes(".")
-  ) {
-    const newPathname = `/@${pathname.slice(1)}`;
-    return NextResponse.redirect(new URL(newPathname, request.url));
+  // Remove @ from URLs
+  if (pathname.startsWith("/@")) {
+    // Don't modify the URL if it's a reserved path
+    const reservedPaths = ["/@explore", "/@feed"];
+    if (reservedPaths.includes(pathname)) {
+      return NextResponse.next();
+    }
+
+    // Remove @ from the URL
+    url.pathname = pathname.replace("/@", "/");
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
@@ -27,13 +29,9 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    // Match all paths that start with @
+    "/@:path*",
+    // Match specific paths that need redirecting
+    "/@leaderboard",
   ],
 };

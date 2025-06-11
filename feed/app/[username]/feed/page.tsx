@@ -75,7 +75,7 @@ export default function FeedPage({
         <div className="max-w-2xl mx-auto">
           <div className="flex justify-center mb-8">
             <Link
-              href={`/@${username}`}
+              href={`/${username}`}
               className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
             >
               Back to @{username}
@@ -96,7 +96,7 @@ export default function FeedPage({
       <div className="max-w-2xl mx-auto">
         <div className="flex justify-center mb-8">
           <Link
-            href={`/@${username}`}
+            href={`/${username}`}
             className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
           >
             Back to @{username}
@@ -123,7 +123,7 @@ export default function FeedPage({
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Link
-                    href={`/@${post.username}`}
+                    href={`/${post.username}`}
                     className="font-medium hover:text-gray-300 transition-colors"
                   >
                     @{post.username}

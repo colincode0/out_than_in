@@ -185,7 +185,7 @@ export default function ProfilePage({
           {session ? (
             <>
               <Link
-                href={`/@${username}/feed`}
+                href={`/${username}/feed`}
                 className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
               >
                 Following Feed

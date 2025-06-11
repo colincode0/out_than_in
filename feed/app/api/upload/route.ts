@@ -96,6 +96,7 @@ export async function POST(request: Request) {
         captureDate: captureDate || null,
         postDate,
         type: "image",
+        hidden: false,
       };
 
       // Store metadata in KV

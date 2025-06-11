@@ -6,6 +6,7 @@ import exifr from "exifr";
 import sharp from "sharp";
 import { kv } from "@vercel/kv";
 import { ImagePost } from "@/app/types";
+import { UserProfile } from "@/app/types";
 
 export async function POST(request: Request) {
   console.log("POST /api/upload - Starting upload process");
@@ -17,8 +18,8 @@ export async function POST(request: Request) {
       session ? "Authenticated" : "Not authenticated"
     );
 
-    if (!session) {
-      console.log("Unauthorized request - no session");
+    if (!session?.user?.email) {
+      console.log("Unauthorized request - no session or email");
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -105,11 +106,22 @@ export async function POST(request: Request) {
       });
       console.log("Image uploaded successfully:", blob.url);
 
+      // Get user's profile to get their actual username
+      const profile = await kv.get<UserProfile>(
+        `user:${session.user.email}:profile`
+      );
+      if (!profile) {
+        throw new Error("User profile not found");
+      }
+
       // Create post metadata
       const postDate = new Date().toISOString();
+      const username = profile.username;
 
-      // Get the current highest order number
-      const postIds = await kv.zrange("posts", 0, -1, { rev: true });
+      // Get the current highest order number for this user
+      const postIds = await kv.zrange(`user:${username}:posts`, 0, -1, {
+        rev: true,
+      });
       const currentHighestOrder =
         postIds.length > 0
           ? (await kv.get<number>(`order:${postIds[0]}`)) || 0
@@ -124,12 +136,14 @@ export async function POST(request: Request) {
         postDate,
         type: "image",
         hidden: false,
+        username,
+        userEmail: session.user.email,
       };
 
       // Store metadata in KV
       await kv.set(`post:${id}`, post);
       await kv.set(`order:${id}`, newOrder);
-      await kv.zadd("posts", { score: timestamp, member: id });
+      await kv.zadd(`user:${username}:posts`, { score: timestamp, member: id });
 
       const response = {
         ...post,

@@ -7,8 +7,8 @@ const NEXTAUTH_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
 export const authConfig = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_ID!,
-      clientSecret: process.env.GOOGLE_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
           prompt: "consent",
@@ -20,7 +20,8 @@ export const authConfig = {
   ],
   callbacks: {
     async signIn({ user }: { user: User }) {
-      return user.email === process.env.ADMIN_EMAIL;
+      // For now, allow any Google account to sign in
+      return true;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,

@@ -2,13 +2,25 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/app/auth";
 import { kv } from "@vercel/kv";
-import { Post } from "@/app/types";
+import { Post, UserProfile } from "@/app/types";
 
-export async function GET() {
+export async function GET(request: Request) {
   console.log("GET /api/posts - Starting request");
   try {
-    // Get post IDs in reverse chronological order
-    const postIds = await kv.zrange("posts", 0, -1, { rev: true });
+    const { searchParams } = new URL(request.url);
+    const username = searchParams.get("username");
+
+    if (!username) {
+      return NextResponse.json(
+        { error: "Username is required" },
+        { status: 400 }
+      );
+    }
+
+    // Get post IDs for the specific user
+    const postIds = await kv.zrange(`user:${username}:posts`, 0, -1, {
+      rev: true,
+    });
     console.log("Found post IDs:", postIds.length);
 
     // Fetch all post metadata
@@ -19,7 +31,10 @@ export async function GET() {
       })
     );
 
-    const validPosts = posts.filter((post): post is Post => post !== null);
+    // Filter out null posts and hidden posts
+    const validPosts = posts.filter(
+      (post): post is Post => post !== null && !post.hidden
+    );
     console.log("Returning posts:", validPosts.length);
     return NextResponse.json(validPosts);
   } catch (error) {
@@ -41,8 +56,8 @@ export async function POST(request: Request) {
       session ? "Authenticated" : "Not authenticated"
     );
 
-    if (!session) {
-      console.log("Unauthorized request - no session");
+    if (!session?.user?.email) {
+      console.log("Unauthorized request - no session or email");
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -63,8 +78,19 @@ export async function POST(request: Request) {
       .substring(2, 15)}`;
     const postDate = new Date().toISOString();
 
-    // Get the current highest order number
-    const postIds = await kv.zrange("posts", 0, -1, { rev: true });
+    // Get user's profile to get their actual username
+    const profile = await kv.get<UserProfile>(
+      `user:${session.user.email}:profile`
+    );
+    if (!profile) {
+      throw new Error("User profile not found");
+    }
+    const username = profile.username;
+
+    // Get the current highest order number for this user
+    const postIds = await kv.zrange(`user:${username}:posts`, 0, -1, {
+      rev: true,
+    });
     const currentHighestOrder =
       postIds.length > 0
         ? (await kv.get<number>(`order:${postIds[0]}`)) || 0
@@ -77,12 +103,15 @@ export async function POST(request: Request) {
       content,
       postDate,
       captureDate: null,
+      username,
+      userEmail: session.user.email,
+      hidden: false,
     };
 
     // Store in KV
     await kv.set(`post:${id}`, post);
     await kv.set(`order:${id}`, newOrder);
-    await kv.zadd("posts", { score: timestamp, member: id });
+    await kv.zadd(`user:${username}:posts`, { score: timestamp, member: id });
 
     console.log("Successfully created post:", id);
     return NextResponse.json(post);
@@ -105,8 +134,8 @@ export async function DELETE(request: Request) {
       session ? "Authenticated" : "Not authenticated"
     );
 
-    if (!session) {
-      console.log("Unauthorized request - no session");
+    if (!session?.user?.email) {
+      console.log("Unauthorized request - no session or email");
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -124,6 +153,14 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
+    // Check if user owns the post
+    if (post.userEmail !== session.user.email) {
+      return NextResponse.json(
+        { error: "Not authorized to delete this post" },
+        { status: 403 }
+      );
+    }
+
     // Delete from blob storage if it's an image
     if (post.type === "image") {
       const { del } = await import("@vercel/blob");
@@ -133,7 +170,7 @@ export async function DELETE(request: Request) {
     // Delete from KV
     await kv.del(`post:${id}`);
     await kv.del(`order:${id}`);
-    await kv.zrem("posts", id);
+    await kv.zrem(`user:${post.username}:posts`, id);
 
     console.log("Successfully deleted post:", id);
     return NextResponse.json({ success: true });
@@ -156,8 +193,8 @@ export async function PATCH(request: Request) {
       session ? "Authenticated" : "Not authenticated"
     );
 
-    if (!session) {
-      console.log("Unauthorized request - no session");
+    if (!session?.user?.email) {
+      console.log("Unauthorized request - no session or email");
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -187,6 +224,14 @@ export async function PATCH(request: Request) {
     const post = await kv.get<Post>(`post:${id}`);
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    // Check if user owns the post
+    if (post.userEmail !== session.user.email) {
+      return NextResponse.json(
+        { error: "Not authorized to update this post" },
+        { status: 403 }
+      );
     }
 
     // Update post with new values

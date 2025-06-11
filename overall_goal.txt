@@ -2,14 +2,45 @@ Overall goal:
 
 Our goal is to make a homegrown simple like instagram like app. We want to be able to upload images and text, and have them in a chronological feed with pagination.
 
-We are thinking Vercel blob storage will be best, as we will be hosting the frontend on Vercel
+We have both vercel blob storage and vercel kv connected with these env variables below
+GOOGLE_ID
+GOOGLE_SECRET
+ADMIN_EMAIL
+NEXTAUTH_SECRET
+BLOB_READ_WRITE_TOKEN
+NEXTAUTH_URL
+KV_URL
+KV_REST_API_URL
+KV_REST_API_TOKEN
+KV_REST_API_READ_ONLY_TOKEN
+REDIS_URL
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
 
-We want simple google auth, with only one email whitelisted. This will be the only way to sign up and post.
+We want simple google auth, and we want individuals to be able to create accounts with username and bio (linked in the backend to their google login email)
+On start, we want to go to the / route and see sign up with google and a sign in button - if they click sign up they log in with google auth, then are taken to a page to set their username (which checks if one already exists before creating) and bio
 
-When we post an image, we want it to recognize the metadata timestamp, but then we want to scrup all metadata from the image before uploading it to the blob storage.
+once they sign up they are taken to /<their username>
 
-The images should display their metadata timestamp, and have the option for a caption.
+On this page we see their username and bio, and then a post image and post text button
 
-There should also be a way to post a text only post.
+If they click post image they see a upload photo button, and when they upload an image it previews it and there is a text box below to add a caption - below this there is a back button that sets it back to the post image/post text buttons
+if they click post, we want to save the date the image was taken from the metadata, then we want to strip the metadata and compress and optimize the image before posting
+this posts the image to their /<username> page as they are authenticated, and can only post to their own profile
 
-We want to add pagination, showing only the latest 10 posts.
+the post is uploaded to vercel blob storage and the stuff like caption is saved in kv
+so for each post we want to see
+- the image
+- the caption 
+- when the photo was posted
+- when the image was taken
+
+these posts show up in chronological order. 
+
+When logged in we want this user to be able to delete and edit captions / edit text posts
+
+There should also be a way to post a text only post, that can be edited when logged in
+
+when not logged in you should be able to view any users posts, but obviously not edit delete or post
+
+

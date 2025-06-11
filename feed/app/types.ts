@@ -1,22 +1,46 @@
-export interface PostMetadata {
+export interface BasePost {
   id: string;
-  url: string;
-  caption?: string;
-  captureDate: string | null;
-  postDate: string;
   type: "image" | "text";
-  content?: string;
+  username: string;
+  userEmail: string;
+  postDate: string;
   hidden: boolean;
 }
 
-export interface TextPost extends PostMetadata {
+export interface ImagePost extends BasePost {
+  type: "image";
+  url: string;
+  caption?: string;
+  captureDate: string | null;
+}
+
+export interface TextPost extends BasePost {
   type: "text";
   content: string;
 }
 
-export interface ImagePost extends PostMetadata {
-  type: "image";
-  caption?: string;
+export type Post = ImagePost | TextPost;
+
+export interface UserProfile {
+  username: string;
+  email: string;
+  displayName: string;
+  bio?: string;
+  createdAt: string;
 }
 
-export type Post = TextPost | ImagePost;
+export interface UserSettings {
+  theme: "light" | "dark" | "system";
+  emailNotifications: boolean;
+}
+
+declare module "next-auth" {
+  interface Session {
+    user?: {
+      email?: string | null;
+      name?: string | null;
+      image?: string | null;
+      id?: string;
+    };
+  }
+}

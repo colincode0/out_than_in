@@ -1,15 +1,23 @@
 "use client";
 
 import Image from "next/image";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { signIn, signOut } from "./auth";
+import ImageUpload from "./components/ImageUpload";
+import { useState } from "react";
 
 export default function Home() {
   const { data: session, status } = useSession();
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+
+  const handleUploadComplete = (url: string) => {
+    setUploadedImages((prev) => [url, ...prev]);
+  };
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <div className="flex flex-col items-center gap-4">
+      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start w-full max-w-4xl">
+        <div className="flex flex-col items-center gap-4 w-full">
           <Image
             className="dark:invert"
             src="/next.svg"
@@ -22,8 +30,9 @@ export default function Home() {
           {status === "loading" ? (
             <div>Loading...</div>
           ) : session ? (
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-4 w-full">
               <p>Signed in as {session.user?.email}</p>
+              <ImageUpload onUploadComplete={handleUploadComplete} />
               <button
                 onClick={() => signOut()}
                 className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
@@ -40,6 +49,21 @@ export default function Home() {
             </button>
           )}
         </div>
+
+        {session && uploadedImages.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full">
+            {uploadedImages.map((url, index) => (
+              <div key={index} className="relative aspect-square">
+                <Image
+                  src={url}
+                  alt={`Uploaded image ${index + 1}`}
+                  fill
+                  className="object-cover rounded-lg"
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
           <li className="mb-2 tracking-[-.01em]">

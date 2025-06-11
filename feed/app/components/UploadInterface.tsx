@@ -2,22 +2,10 @@
 
 import TextPost from "./TextPost";
 import ImageUpload from "./ImageUpload";
-
-interface Post {
-  url: string;
-  content?: string;
-  timestamp: string;
-  type: "text" | "image";
-  uploadTimestamp?: string;
-  exifTimestamp?: string | null;
-}
+import { Post } from "@/app/types";
 
 interface UploadInterfaceProps {
-  onImagePostComplete: (
-    url: string,
-    uploadTimestamp: string,
-    exifTimestamp: string | null
-  ) => void;
+  onImagePostComplete: (post: Post) => void;
   onTextPostComplete: (post: Post) => void;
 }
 

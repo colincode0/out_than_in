@@ -1,43 +1,25 @@
-import { list, put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authConfig } from "@/app/auth";
+import { kv } from "@vercel/kv";
+import { Post } from "@/app/types";
 
 export async function GET() {
   console.log("GET /api/posts - Starting request");
   try {
-    const { blobs } = await list();
-    console.log("Found blobs:", blobs.length);
+    // Get post IDs in reverse chronological order
+    const postIds = await kv.zrange("posts", 0, -1, { rev: true });
+    console.log("Found post IDs:", postIds.length);
 
+    // Fetch all post metadata
     const posts = await Promise.all(
-      blobs.map(async (blob) => {
-        console.log("Processing blob:", blob.pathname);
-        const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(blob.pathname);
-        const isText = blob.pathname.startsWith("post-");
-
-        if (isText) {
-          const response = await fetch(blob.url);
-          const content = await response.text();
-          return {
-            url: blob.url,
-            content,
-            timestamp: blob.uploadedAt,
-            type: "text" as const,
-          };
-        } else if (isImage) {
-          return {
-            url: blob.url,
-            timestamp: blob.uploadedAt,
-            type: "image" as const,
-          };
-        }
-        return null;
+      postIds.map(async (id) => {
+        const post = await kv.get<Post>(`post:${id}`);
+        return post;
       })
     );
 
-    const validPosts = posts.filter(
-      (post): post is NonNullable<typeof post> => post !== null
-    );
+    const validPosts = posts.filter((post): post is Post => post !== null);
     console.log("Returning posts:", validPosts.length);
     return NextResponse.json(validPosts);
   } catch (error) {
@@ -75,26 +57,89 @@ export async function POST(request: Request) {
       );
     }
 
-    const timestamp = new Date().toISOString();
-    const filename = `post-${timestamp}.txt`;
-    console.log("Creating text file:", filename);
+    const timestamp = Date.now();
+    const id = `text_${timestamp}_${Math.random()
+      .toString(36)
+      .substring(2, 15)}`;
+    const postDate = new Date().toISOString();
 
-    const blob = await put(filename, content, {
-      access: "public",
-      addRandomSuffix: true,
-    });
+    // Get the current highest order number
+    const postIds = await kv.zrange("posts", 0, -1, { rev: true });
+    const currentHighestOrder =
+      postIds.length > 0
+        ? (await kv.get<number>(`order:${postIds[0]}`)) || 0
+        : 0;
+    const newOrder = currentHighestOrder + 1;
 
-    console.log("Successfully created post:", blob.url);
-    return NextResponse.json({
-      url: blob.url,
-      content,
-      timestamp,
+    const post = {
+      id,
       type: "text" as const,
-    });
+      content,
+      postDate,
+      captureDate: null,
+    };
+
+    // Store in KV
+    await kv.set(`post:${id}`, post);
+    await kv.set(`order:${id}`, newOrder);
+    await kv.zadd("posts", { score: timestamp, member: id });
+
+    console.log("Successfully created post:", id);
+    return NextResponse.json(post);
   } catch (error) {
     console.error("Error in POST /api/posts:", error);
     return NextResponse.json(
       { error: "Failed to create post" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  console.log("DELETE /api/posts - Starting delete process");
+
+  try {
+    const session = await getServerSession(authConfig);
+    console.log(
+      "Session status:",
+      session ? "Authenticated" : "Not authenticated"
+    );
+
+    if (!session) {
+      console.log("Unauthorized request - no session");
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      console.log("No ID provided for deletion");
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
+
+    // Get post data to delete blob if it's an image
+    const post = await kv.get<Post>(`post:${id}`);
+    if (!post) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    // Delete from blob storage if it's an image
+    if (post.type === "image") {
+      const { del } = await import("@vercel/blob");
+      await del(post.url);
+    }
+
+    // Delete from KV
+    await kv.del(`post:${id}`);
+    await kv.zrem("posts", id);
+
+    console.log("Successfully deleted post:", id);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error in DELETE /api/posts:", error);
+    return NextResponse.json(
+      { error: "Failed to delete post" },
       { status: 500 }
     );
   }

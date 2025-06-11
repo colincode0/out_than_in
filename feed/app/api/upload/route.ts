@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authConfig } from "@/app/auth";
 import exifr from "exifr";
 import sharp from "sharp";
+import { kv } from "@vercel/kv";
+import { ImagePost } from "@/app/types";
 
 export async function POST(request: Request) {
   console.log("POST /api/upload - Starting upload process");
@@ -22,6 +24,8 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    const caption = formData.get("caption") as string;
+    const captureDate = formData.get("captureDate") as string;
 
     if (!file) {
       console.log("No file provided in request");
@@ -35,12 +39,14 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(arrayBuffer);
 
     // Extract EXIF data before processing
-    let exifTimestamp: string | null = null;
+    let captureDateExtracted: string | null = null;
     try {
       const exifData = await exifr.parse(buffer);
       if (exifData?.DateTimeOriginal) {
-        exifTimestamp = new Date(exifData.DateTimeOriginal).toISOString();
-        console.log("Extracted timestamp from EXIF:", exifTimestamp);
+        captureDateExtracted = new Date(
+          exifData.DateTimeOriginal
+        ).toISOString();
+        console.log("Extracted timestamp from EXIF:", captureDateExtracted);
       }
     } catch (exifError) {
       console.log("No EXIF data found or error reading EXIF:", exifError);
@@ -51,8 +57,11 @@ export async function POST(request: Request) {
       .withMetadata() // Remove all metadata
       .toBuffer();
 
-    // Generate a unique filename
+    // Generate a unique filename and ID
     const timestamp = Date.now();
+    const id = `img_${timestamp}_${Math.random()
+      .toString(36)
+      .substring(2, 15)}`;
     const baseFilename = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
     const filename = `${timestamp}-${baseFilename}.${file.name
       .split(".")
@@ -69,10 +78,35 @@ export async function POST(request: Request) {
       });
       console.log("Image uploaded successfully:", blob.url);
 
+      // Create post metadata
+      const postDate = new Date().toISOString();
+
+      // Get the current highest order number
+      const postIds = await kv.zrange("posts", 0, -1, { rev: true });
+      const currentHighestOrder =
+        postIds.length > 0
+          ? (await kv.get<number>(`order:${postIds[0]}`)) || 0
+          : 0;
+      const newOrder = currentHighestOrder + 1;
+
+      const post: ImagePost = {
+        id,
+        url: blob.url,
+        caption: caption || undefined,
+        captureDate: captureDate || null,
+        postDate,
+        type: "image",
+      };
+
+      // Store metadata in KV
+      await kv.set(`post:${id}`, post);
+      await kv.set(`order:${id}`, newOrder);
+      await kv.zadd("posts", { score: timestamp, member: id });
+
       const response = {
-        ...blob,
-        uploadTimestamp: new Date().toISOString(),
-        exifTimestamp: exifTimestamp || null,
+        ...post,
+        uploadTimestamp: postDate,
+        exifTimestamp: captureDateExtracted,
       };
       console.log("Sending response:", response);
 

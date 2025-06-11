@@ -14,22 +14,25 @@ export default function ProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { data: session } = useSession();
-  const { username } = use(params);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [postToDelete, setPostToDelete] = useState<Post | null>(null);
+  const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [editingCaption, setEditingCaption] = useState<string | null>(null);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [following, setFollowing] = useState(0);
+  const [followers, setFollowers] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const { username } = use(params);
 
   const fetchProfile = async () => {
     try {
       const response = await fetch(`/api/user?username=${username}`);
       if (!response.ok) {
         if (response.status === 404) {
-          setError("Profile not found");
+          setError("User not found");
         } else {
           throw new Error("Failed to fetch profile");
         }
@@ -37,9 +40,12 @@ export default function ProfilePage({
       }
       const data = await response.json();
       setProfile(data.profile);
+      setFollowing(data.following);
+      setFollowers(data.followers);
+      setIsFollowing(data.isFollowing);
     } catch (err) {
       console.error("Error fetching profile:", err);
-      setError("Failed to fetch profile");
+      setError(err instanceof Error ? err.message : "Failed to fetch profile");
     }
   };
 
@@ -53,13 +59,13 @@ export default function ProfilePage({
       setPosts(data);
     } catch (err) {
       console.error("Error fetching posts:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch posts");
     }
   };
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      setError(null);
       await Promise.all([fetchProfile(), fetchPosts()]);
       setIsLoading(false);
     };
@@ -71,15 +77,15 @@ export default function ProfilePage({
   };
 
   const handleDeletePost = async (post: Post) => {
-    setPostToDelete(post);
+    setPostToDelete(post.id);
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const handleConfirmDelete = async () => {
     if (!postToDelete) return;
 
     try {
-      const response = await fetch(`/api/posts?id=${postToDelete.id}`, {
+      const response = await fetch(`/api/posts?id=${postToDelete}`, {
         method: "DELETE",
       });
 
@@ -88,11 +94,11 @@ export default function ProfilePage({
       }
 
       setPosts((prevPosts) =>
-        prevPosts.filter((post) => post.id !== postToDelete.id)
+        prevPosts.filter((post) => post.id !== postToDelete)
       );
     } catch (err) {
       console.error("Error deleting post:", err);
-      alert("Failed to delete post. Please try again.");
+      setError(err instanceof Error ? err.message : "Failed to delete post");
     } finally {
       setIsDeleteModalOpen(false);
       setPostToDelete(null);
@@ -113,15 +119,17 @@ export default function ProfilePage({
         throw new Error("Failed to update caption");
       }
 
-      const updatedPost = await response.json();
       setPosts((prevPosts) =>
-        prevPosts.map((post) => (post.id === postId ? updatedPost : post))
+        prevPosts.map((post) =>
+          post.id === postId ? { ...post, caption: newCaption } : post
+        )
       );
-      setEditingCaption(null);
-      setEditingPostId(null);
     } catch (err) {
       console.error("Error updating caption:", err);
-      setError("Failed to update caption");
+      setError(err instanceof Error ? err.message : "Failed to update caption");
+    } finally {
+      setEditingCaption(null);
+      setEditingPostId(null);
     }
   };
 
@@ -196,7 +204,13 @@ export default function ProfilePage({
       </div>
 
       <div className="max-w-2xl mx-auto">
-        <ProfileHeader profile={profile} onProfileUpdate={fetchProfile} />
+        <ProfileHeader
+          profile={profile}
+          onProfileUpdate={fetchProfile}
+          following={following}
+          followers={followers}
+          isFollowing={isFollowing}
+        />
 
         {isOwnProfile && (
           <div className="mb-8 flex justify-center">
@@ -344,7 +358,7 @@ export default function ProfilePage({
           setIsDeleteModalOpen(false);
           setPostToDelete(null);
         }}
-        onConfirm={confirmDelete}
+        onConfirm={handleConfirmDelete}
       />
     </div>
   );

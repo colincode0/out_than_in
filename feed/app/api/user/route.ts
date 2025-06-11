@@ -33,14 +33,34 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
+    // Get following and followers counts
+    const following = await kv.smembers(`user:${profile.email}:following`);
+    const followers = await kv.smembers(`user:${profile.email}:followers`);
+
     // Only fetch settings if user is authenticated and viewing their own profile
     const session = await getServerSession(authConfig);
     let settings = null;
-    if (session?.user?.email === profile.email) {
-      settings = await kv.get<UserSettings>(`user:${profile.email}:settings`);
+    let isFollowing = false;
+
+    if (session?.user?.email) {
+      if (session.user.email === profile.email) {
+        settings = await kv.get<UserSettings>(`user:${profile.email}:settings`);
+      } else {
+        // Check if the current user is following this profile
+        isFollowing = await kv.sismember(
+          `user:${session.user.email}:following`,
+          profile.username
+        );
+      }
     }
 
-    return NextResponse.json({ profile, settings });
+    return NextResponse.json({
+      profile,
+      settings,
+      following: following.length,
+      followers: followers.length,
+      isFollowing,
+    });
   } catch (error) {
     console.error("Error in GET /api/user:", error);
     return NextResponse.json(
@@ -167,6 +187,62 @@ export async function PATCH(request: Request) {
     console.error("Error in PATCH /api/user:", error);
     return NextResponse.json(
       { error: "Failed to update user data" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const session = await getServerSession(authConfig);
+    if (!session?.user?.email) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const { action, targetUsername } = await request.json();
+    if (!action || !targetUsername) {
+      return NextResponse.json(
+        { error: "Action and target username are required" },
+        { status: 400 }
+      );
+    }
+
+    // Get target user's profile to get their email
+    const targetProfile = await kv.get<UserProfile>(
+      `username:${targetUsername}:profile`
+    );
+    if (!targetProfile) {
+      return NextResponse.json(
+        { error: "Target user not found" },
+        { status: 404 }
+      );
+    }
+
+    if (action === "follow") {
+      // Add to current user's following
+      await kv.sadd(`user:${session.user.email}:following`, targetUsername);
+      // Add to target user's followers
+      await kv.sadd(
+        `user:${targetProfile.email}:followers`,
+        session.user.email
+      );
+    } else if (action === "unfollow") {
+      // Remove from current user's following
+      await kv.srem(`user:${session.user.email}:following`, targetUsername);
+      // Remove from target user's followers
+      await kv.srem(
+        `user:${targetProfile.email}:followers`,
+        session.user.email
+      );
+    } else {
+      return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error in PUT /api/user:", error);
+    return NextResponse.json(
+      { error: "Failed to update following status" },
       { status: 500 }
     );
   }

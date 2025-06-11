@@ -15,7 +15,6 @@ export default function ProfileHeader({
 }: ProfileHeaderProps) {
   const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
-  const [displayName, setDisplayName] = useState(profile.displayName);
   const [bio, setBio] = useState(profile.bio);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +33,6 @@ export default function ProfileHeader({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          displayName,
           bio,
         }),
       });
@@ -58,23 +56,6 @@ export default function ProfileHeader({
       {isEditing ? (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label
-              htmlFor="displayName"
-              className="block text-sm font-medium mb-2"
-            >
-              Display Name
-            </label>
-            <input
-              type="text"
-              id="displayName"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full p-2 rounded-lg border border-gray-700 bg-background text-foreground"
-              required
-            />
-          </div>
-
-          <div>
             <label htmlFor="bio" className="block text-sm font-medium mb-2">
               Bio
             </label>
@@ -93,7 +74,6 @@ export default function ProfileHeader({
               type="button"
               onClick={() => {
                 setIsEditing(false);
-                setDisplayName(profile.displayName);
                 setBio(profile.bio);
               }}
               className="px-4 py-2 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300"
@@ -102,7 +82,7 @@ export default function ProfileHeader({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !displayName.trim()}
+              disabled={isSubmitting}
               className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Saving..." : "Save Changes"}
@@ -112,10 +92,7 @@ export default function ProfileHeader({
       ) : (
         <div className="space-y-4">
           <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-bold">@{profile.username}</h1>
-              <h2 className="text-xl text-gray-300">{profile.displayName}</h2>
-            </div>
+            <h1 className="text-2xl font-bold">@{profile.username}</h1>
             {isOwnProfile && (
               <button
                 onClick={() => setIsEditing(true)}

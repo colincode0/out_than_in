@@ -1,13 +1,12 @@
 "use client";
 
+import { useState, useEffect, use } from "react";
 import { useSession, signOut, signIn } from "next-auth/react";
-import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Post, UserProfile } from "@/app/types";
-import { use } from "react";
+import ProfileHeader from "@/app/components/ProfileHeader";
 import PostTypeSelector from "@/app/components/PostTypeSelector";
 import DeleteConfirmationModal from "@/app/components/DeleteConfirmationModal";
-import ProfileHeader from "@/app/components/ProfileHeader";
-import Image from "next/image";
 
 export default function ProfilePage({
   params,
@@ -16,8 +15,8 @@ export default function ProfilePage({
 }) {
   const { data: session } = useSession();
   const { username } = use(params);
-  const [posts, setPosts] = useState<Post[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -25,36 +24,49 @@ export default function ProfilePage({
   const [editingCaption, setEditingCaption] = useState<string | null>(null);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch profile
-        const profileResponse = await fetch(`/api/user?username=${username}`);
-        if (!profileResponse.ok) {
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch(`/api/user?username=${username}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          setError("Profile not found");
+        } else {
           throw new Error("Failed to fetch profile");
         }
-        const profileData = await profileResponse.json();
-        setProfile(profileData.profile);
-
-        // Fetch posts
-        const postsResponse = await fetch(`/api/posts?username=${username}`);
-        if (!postsResponse.ok) {
-          throw new Error("Failed to fetch posts");
-        }
-        const postsData = await postsResponse.json();
-        setPosts(postsData);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setIsLoading(false);
+        return;
       }
-    };
+      const data = await response.json();
+      setProfile(data.profile);
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+      setError("Failed to fetch profile");
+    }
+  };
 
+  const fetchPosts = async () => {
+    try {
+      const response = await fetch(`/api/posts?username=${username}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch posts");
+      }
+      const data = await response.json();
+      setPosts(data);
+    } catch (err) {
+      console.error("Error fetching posts:", err);
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      await Promise.all([fetchProfile(), fetchPosts()]);
+      setIsLoading(false);
+    };
     fetchData();
   }, [username]);
 
-  const handlePostComplete = (newPost: Post) => {
+  const handlePostComplete = async (newPost: Post) => {
     setPosts((prevPosts) => [newPost, ...prevPosts]);
   };
 
@@ -135,17 +147,16 @@ export default function ProfilePage({
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-xl text-red-500">{error}</p>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">User Not Found</h1>
+          <p className="text-gray-400">@{username} doesn&apos;t exist yet.</p>
+        </div>
       </div>
     );
   }
 
   if (!profile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-xl text-gray-400">Profile not found</p>
-      </div>
-    );
+    return null;
   }
 
   const isOwnProfile = session?.user?.email === profile.email;
@@ -185,10 +196,10 @@ export default function ProfilePage({
       </div>
 
       <div className="max-w-2xl mx-auto">
-        <ProfileHeader profile={profile} />
+        <ProfileHeader profile={profile} onProfileUpdate={fetchProfile} />
 
         {isOwnProfile && (
-          <div className="mb-8">
+          <div className="mb-8 flex justify-center">
             <PostTypeSelector onPostComplete={handlePostComplete} />
           </div>
         )}

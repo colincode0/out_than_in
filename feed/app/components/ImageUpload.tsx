@@ -20,22 +20,30 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
     setError(null);
 
     try {
+      console.log("Starting image upload for file:", file.name);
+
       const formData = new FormData();
       formData.append("file", file);
 
+      console.log("Sending request to /api/upload");
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
 
+      console.log("Upload response status:", response.status);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
+        console.error("Upload error response:", errorData);
         throw new Error(
           errorData?.error || `Upload failed with status: ${response.status}`
         );
       }
 
       const data = await response.json();
+      console.log("Upload successful, received data:", data);
+
       if (!data.url) {
         throw new Error("No URL returned from upload");
       }

@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import { useSession } from "next-auth/react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Post } from "../types";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
@@ -16,7 +16,7 @@ interface ProfileContentProps {
 
 export default function ProfileContent({ params }: ProfileContentProps) {
   const { username } = use(params);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export default function ProfileContent({ params }: ProfileContentProps) {
 
   const isOwnProfile = session?.user?.email?.split("@")[0] === username;
 
-  const fetchPosts = useCallback(async () => {
+  const fetchPosts = async () => {
     try {
       const response = await fetch(`/api/posts?username=${username}`);
       if (!response.ok) {
@@ -47,11 +47,11 @@ export default function ProfileContent({ params }: ProfileContentProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [username]);
+  };
 
   useEffect(() => {
     fetchPosts();
-  }, [fetchPosts]);
+  }, [username]);
 
   const handlePostComplete = (post: Post) => {
     setPosts((prev) => [post, ...prev]);

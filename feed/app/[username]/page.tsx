@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use, useCallback } from "react";
+import { useState, useEffect, use } from "react";
 import { useSession, signOut, signIn } from "next-auth/react";
 import Image from "next/image";
 import { Post, UserProfile } from "@/app/types";
@@ -24,10 +24,11 @@ export default function ProfilePage({
   const [editingCaption, setEditingCaption] = useState<string | null>(null);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [following, setFollowing] = useState(0);
+  const [followers, setFollowers] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const { username } = use(params);
 
-  const fetchProfile = useCallback(async () => {
+  const fetchProfile = async () => {
     try {
       const response = await fetch(`/api/user?username=${username}`);
       if (!response.ok) {
@@ -41,14 +42,15 @@ export default function ProfilePage({
       const data = await response.json();
       setProfile(data.profile);
       setFollowing(data.following);
+      setFollowers(data.followers);
       setIsFollowing(data.isFollowing);
     } catch (err) {
       console.error("Error fetching profile:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch profile");
     }
-  }, [username]);
+  };
 
-  const fetchPosts = useCallback(async () => {
+  const fetchPosts = async () => {
     try {
       const response = await fetch(`/api/posts?username=${username}`);
       if (!response.ok) {
@@ -60,7 +62,7 @@ export default function ProfilePage({
       console.error("Error fetching posts:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch posts");
     }
-  }, [username]);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,7 +71,7 @@ export default function ProfilePage({
       setIsLoading(false);
     };
     fetchData();
-  }, [fetchProfile, fetchPosts]);
+  }, [username]);
 
   const handlePostComplete = async (newPost: Post) => {
     setPosts((prevPosts) => [newPost, ...prevPosts]);
@@ -175,6 +177,7 @@ export default function ProfilePage({
           profile={profile}
           onProfileUpdate={fetchProfile}
           following={following}
+          followers={followers}
           isFollowing={isFollowing}
         />
 

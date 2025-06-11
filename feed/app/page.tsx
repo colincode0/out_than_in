@@ -47,12 +47,28 @@ export default function Home() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <h1 className="text-4xl font-bold mb-8">Welcome to Scrolls.nyc</h1>
-        <button
-          onClick={() => signIn("google")}
-          className="px-6 py-3 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-        >
-          Sign in with Google
-        </button>
+        <div className="flex flex-col gap-4 w-full max-w-sm">
+          <button
+            onClick={() => signIn("google")}
+            className="px-6 py-3 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+          >
+            Sign up with Google
+          </button>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-700"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-background text-gray-400">or</span>
+            </div>
+          </div>
+          <button
+            onClick={() => signIn("google")}
+            className="px-6 py-3 rounded-lg border border-gray-700 text-white hover:bg-gray-800 transition-colors"
+          >
+            Log in with Google
+          </button>
+        </div>
       </div>
     );
   }

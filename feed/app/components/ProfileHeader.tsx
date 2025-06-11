@@ -8,6 +8,7 @@ interface ProfileHeaderProps {
   profile: UserProfile;
   onProfileUpdate?: () => void;
   following: number;
+  followers: number;
   isFollowing: boolean;
 }
 
@@ -15,6 +16,7 @@ export default function ProfileHeader({
   profile,
   onProfileUpdate,
   following,
+  followers,
   isFollowing: initialIsFollowing,
 }: ProfileHeaderProps) {
   const { data: session } = useSession();

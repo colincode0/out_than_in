@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
-import ImageUpload from "./components/ImageUpload";
-import TextPost from "./components/TextPost";
+import UploadInterface from "./components/UploadInterface";
 import { useState, useEffect } from "react";
 
 interface Post {
@@ -11,6 +10,8 @@ interface Post {
   content?: string;
   timestamp: string;
   type: "text" | "image";
+  metadataTimestamp?: string;
+  caption?: string;
 }
 
 export default function Home() {
@@ -41,9 +42,19 @@ export default function Home() {
     }
   }, [session]);
 
-  const handleImageUpload = (url: string) => {
+  const handleImagePost = (
+    url: string,
+    metadataTimestamp: string,
+    caption?: string
+  ) => {
     setPosts((prev) => [
-      { url, timestamp: new Date().toISOString(), type: "image" },
+      {
+        url,
+        timestamp: new Date().toISOString(),
+        type: "image",
+        metadataTimestamp,
+        caption,
+      },
       ...prev,
     ]);
   };
@@ -70,8 +81,10 @@ export default function Home() {
           ) : session ? (
             <div className="flex flex-col items-center gap-4 w-full">
               <p>Signed in as {session.user?.email}</p>
-              <TextPost onPostComplete={handleTextPost} />
-              <ImageUpload onUploadComplete={handleImageUpload} />
+              <UploadInterface
+                onImagePostComplete={handleImagePost}
+                onTextPostComplete={handleTextPost}
+              />
               <button
                 onClick={() => signOut()}
                 className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
@@ -107,16 +120,27 @@ export default function Home() {
                         </p>
                       </div>
                     ) : (
-                      <div className="relative aspect-square">
-                        <Image
-                          src={post.url}
-                          alt={`Uploaded image ${index + 1}`}
-                          fill
-                          className="object-cover rounded-lg"
-                        />
-                        <p className="absolute bottom-2 right-2 text-sm text-white bg-black/50 px-2 py-1 rounded">
-                          {new Date(post.timestamp).toLocaleString()}
-                        </p>
+                      <div className="flex flex-col gap-2">
+                        <div className="relative aspect-square">
+                          <Image
+                            src={post.url}
+                            alt={`Uploaded image ${index + 1}`}
+                            fill
+                            className="object-cover rounded-lg"
+                          />
+                          <p className="absolute bottom-2 right-2 text-sm text-white bg-black/50 px-2 py-1 rounded">
+                            {post.metadataTimestamp
+                              ? new Date(
+                                  post.metadataTimestamp
+                                ).toLocaleString()
+                              : new Date(post.timestamp).toLocaleString()}
+                          </p>
+                        </div>
+                        {post.caption && (
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            {post.caption}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>

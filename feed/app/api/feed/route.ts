@@ -21,16 +21,14 @@ export async function GET(request: Request) {
       );
     }
 
-    // Get user's profile to verify they're requesting their own feed
-    const profile = await kv.get<UserProfile>(
-      `user:${session.user.email}:profile`
-    );
-    if (!profile || profile.username !== username) {
-      return new NextResponse("Unauthorized", { status: 401 });
+    // Get the profile of the user whose feed we're viewing
+    const profile = await kv.get<UserProfile>(`username:${username}:profile`);
+    if (!profile) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Get list of users being followed
-    const following = await kv.smembers(`user:${session.user.email}:following`);
+    const following = await kv.smembers(`user:${profile.email}:following`);
     if (following.length === 0) {
       return NextResponse.json({ posts: [] });
     }

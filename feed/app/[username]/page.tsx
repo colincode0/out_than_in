@@ -7,6 +7,7 @@ import { Post, UserProfile } from "@/app/types";
 import ProfileHeader from "@/app/components/ProfileHeader";
 import PostTypeSelector from "@/app/components/PostTypeSelector";
 import DeleteConfirmationModal from "@/app/components/DeleteConfirmationModal";
+import Link from "next/link";
 
 export default function ProfilePage({
   params,
@@ -171,38 +172,6 @@ export default function ProfilePage({
 
   return (
     <div className="min-h-screen p-4">
-      <div className="fixed top-4 right-4 z-50">
-        {session ? (
-          <button
-            onClick={() => signOut()}
-            className="p-2 rounded-full hover:bg-gray-800 transition-colors"
-            title="Sign out"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-          </button>
-        ) : (
-          <button
-            onClick={() => signIn("google")}
-            className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-          >
-            Log in
-          </button>
-        )}
-      </div>
-
       <div className="max-w-2xl mx-auto">
         <ProfileHeader
           profile={profile}
@@ -211,6 +180,34 @@ export default function ProfilePage({
           followers={followers}
           isFollowing={isFollowing}
         />
+
+        <div className="flex justify-center gap-4 mb-8">
+          {session ? (
+            <>
+              <Link
+                href={`/@${username}/feed`}
+                className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
+              >
+                Following Feed
+              </Link>
+              {isOwnProfile && (
+                <button
+                  onClick={() => signOut()}
+                  className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
+                >
+                  Sign out
+                </button>
+              )}
+            </>
+          ) : (
+            <button
+              onClick={() => signIn("google")}
+              className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+            >
+              Log in
+            </button>
+          )}
+        </div>
 
         {isOwnProfile && (
           <div className="mb-8 flex justify-center">

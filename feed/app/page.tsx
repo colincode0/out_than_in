@@ -16,6 +16,7 @@ export default function Home() {
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const [editingCaption, setEditingCaption] = useState<string | null>(null);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState<string | null>(null);
 
   const fetchPosts = async () => {
     try {
@@ -119,6 +120,30 @@ export default function Home() {
     }
   };
 
+  const handleEditText = async (post: Post, newText: string) => {
+    try {
+      const response = await fetch(`/api/posts?id=${post.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: newText }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update text");
+      }
+
+      const updatedPost = await response.json();
+      setPosts((prev) => prev.map((p) => (p.id === post.id ? updatedPost : p)));
+      setEditingText(null);
+      setEditingPostId(null);
+    } catch (err) {
+      console.error("Error updating text:", err);
+      alert("Failed to update text. Please try again.");
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString)
       .toLocaleString(undefined, {
@@ -207,10 +232,71 @@ export default function Home() {
                 >
                   {post.type === "text" ? (
                     <div className="flex flex-col gap-2 p-4">
-                      <p className="whitespace-pre-wrap">{post.content}</p>
-                      <p className="text-sm text-gray-500">
-                        Posted: {formatDate(post.postDate)}
-                      </p>
+                      {editingPostId === post.id ? (
+                        <div className="flex flex-col gap-2">
+                          <textarea
+                            value={editingText || post.content}
+                            onChange={(e) => setEditingText(e.target.value)}
+                            className="w-full p-2 rounded-lg border border-gray-700 bg-background text-foreground resize-none min-h-[80px]"
+                            placeholder="Edit your post..."
+                          />
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingText(null);
+                                setEditingPostId(null);
+                              }}
+                              className="px-3 py-1 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleEditText(post, editingText || "")
+                              }
+                              className="px-3 py-1 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-between items-start gap-2">
+                            <p className="whitespace-pre-wrap flex-1">
+                              {post.content}
+                            </p>
+                            {session && (
+                              <button
+                                onClick={() => {
+                                  setEditingText(post.content);
+                                  setEditingPostId(post.id);
+                                }}
+                                className="p-1 rounded-full hover:bg-gray-800 transition-colors"
+                                title="Edit post"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-500">
+                            Posted: {formatDate(post.postDate)}
+                          </p>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <div className="flex flex-col">

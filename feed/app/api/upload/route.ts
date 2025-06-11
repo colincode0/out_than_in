@@ -66,23 +66,18 @@ export async function POST(request: Request) {
     let processedImageBuffer: Buffer;
     try {
       const image = sharp(buffer);
-      const metadata = await image.metadata();
 
-      // If image is larger than 2000px in either dimension, resize it
-      if (
-        (metadata.width && metadata.width > 2000) ||
-        (metadata.height && metadata.height > 2000)
-      ) {
-        processedImageBuffer = await image
-          .resize(2000, 2000, {
-            fit: "inside",
-            withoutEnlargement: true,
-          })
-          .withMetadata()
-          .toBuffer();
-      } else {
-        processedImageBuffer = await image.withMetadata().toBuffer();
-      }
+      // Resize image to max 1200px on longest side while maintaining aspect ratio
+      processedImageBuffer = await image
+        .resize(1200, 1200, {
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .webp({ quality: 85 }) // Convert to WebP with 85% quality
+        .withMetadata() // Keep orientation metadata
+        .toBuffer();
+
+      console.log("Image processed successfully");
     } catch (sharpError) {
       console.error("Error processing image:", sharpError);
       return NextResponse.json(
@@ -97,9 +92,7 @@ export async function POST(request: Request) {
       .toString(36)
       .substring(2, 15)}`;
     const baseFilename = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
-    const filename = `${timestamp}-${baseFilename}.${file.name
-      .split(".")
-      .pop()}`;
+    const filename = `${timestamp}-${baseFilename}.webp`; // Use .webp extension
     console.log("Generated filename:", filename);
 
     try {

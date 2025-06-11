@@ -169,9 +169,13 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    const { hidden, caption } = await request.json();
+    const { hidden, caption, content } = await request.json();
 
-    if (typeof hidden !== "boolean" && typeof caption !== "string") {
+    if (
+      typeof hidden !== "boolean" &&
+      typeof caption !== "string" &&
+      typeof content !== "string"
+    ) {
       console.log("Invalid update values provided");
       return NextResponse.json(
         { error: "Update values must be valid" },
@@ -190,6 +194,7 @@ export async function PATCH(request: Request) {
       ...post,
       ...(typeof hidden === "boolean" && { hidden }),
       ...(typeof caption === "string" && post.type === "image" && { caption }),
+      ...(typeof content === "string" && post.type === "text" && { content }),
     };
     await kv.set(`post:${id}`, updatedPost);
 

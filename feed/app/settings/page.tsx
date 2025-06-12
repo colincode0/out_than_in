@@ -12,6 +12,9 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bio, setBio] = useState("");
+  const [isSavingBio, setIsSavingBio] = useState(false);
+  const [isEditingBio, setIsEditingBio] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -28,6 +31,7 @@ export default function SettingsPage() {
           if (response.ok) {
             const data = await response.json();
             setProfile(data.profile);
+            setBio(data.profile.bio || "");
           }
         } catch (error) {
           console.error("Error fetching profile:", error);
@@ -109,6 +113,44 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveBio = async () => {
+    if (!session?.user?.email) return;
+
+    setIsSavingBio(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/user", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          bio,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update bio");
+      }
+
+      // Refresh profile data
+      const updatedResponse = await fetch(
+        `/api/user?email=${session.user.email}`
+      );
+      if (updatedResponse.ok) {
+        const profileData = await updatedResponse.json();
+        setProfile(profileData.profile);
+      }
+      setIsEditingBio(false);
+    } catch (err) {
+      console.error("Error updating bio:", err);
+      setError(err instanceof Error ? err.message : "Failed to update bio");
+    } finally {
+      setIsSavingBio(false);
+    }
+  };
+
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -169,6 +211,67 @@ export default function SettingsPage() {
                 </div>
               </div>
               {error && <p className="mt-2 text-red-500 text-sm">{error}</p>}
+            </div>
+
+            {/* Bio */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-medium">Bio</h3>
+                {!isEditingBio && (
+                  <button
+                    onClick={() => setIsEditingBio(true)}
+                    className="p-1 rounded-full hover:bg-gray-800 transition-colors"
+                    title="Edit bio"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              {isEditingBio ? (
+                <div className="flex flex-col gap-2">
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    className="w-full p-2 rounded-lg border border-gray-700 bg-background text-foreground resize-none min-h-[100px]"
+                    placeholder="Write something about yourself..."
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => {
+                        setIsEditingBio(false);
+                        setBio(profile?.bio || "");
+                      }}
+                      className="px-4 py-2 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveBio}
+                      disabled={isSavingBio}
+                      className="px-4 py-2 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSavingBio ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-300 whitespace-pre-wrap">
+                  {bio || "No bio yet"}
+                </p>
+              )}
             </div>
           </div>
         </div>

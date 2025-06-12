@@ -9,7 +9,18 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const username = searchParams.get("username");
+    const id = searchParams.get("id");
 
+    // If ID is provided, fetch a single post
+    if (id) {
+      const post = await kv.get<Post>(`post:${id}`);
+      if (!post) {
+        return NextResponse.json({ error: "Post not found" }, { status: 404 });
+      }
+      return NextResponse.json(post);
+    }
+
+    // Otherwise, fetch posts by username
     if (!username) {
       return NextResponse.json(
         { error: "Username is required" },

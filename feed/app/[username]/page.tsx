@@ -26,6 +26,7 @@ export default function ProfilePage({
   const [following, setFollowing] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const { username } = use(params);
 
   const fetchProfile = async () => {
@@ -212,23 +213,68 @@ export default function ProfilePage({
           handleFollow={handleFollow}
         />
 
-        <div className="flex flex-col items-center gap-4 mb-8">
-          {session && !isOwnProfile ? (
-            <Link
-              href={`/${username}/feed`}
-              className="px-4 py-2 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300 transition-colors"
-            >
-              Following Feed
-            </Link>
-          ) : !session ? (
-            <button
-              onClick={() => signIn("google")}
-              className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-            >
-              Log in
-            </button>
-          ) : null}
+        {/* View toggle */}
+        <div className="flex justify-end mb-4">
+          <button
+            className={`px-3 py-1 rounded-l-lg border border-gray-700 text-gray-300 ${
+              viewMode === "list" ? "bg-gray-800" : "hover:bg-gray-800"
+            }`}
+            onClick={() => setViewMode("list")}
+            aria-pressed={viewMode === "list"}
+          >
+            List
+          </button>
+          <button
+            className={`px-3 py-1 rounded-r-lg border-t border-b border-r border-gray-700 text-gray-300 ${
+              viewMode === "grid" ? "bg-gray-800" : "hover:bg-gray-800"
+            }`}
+            onClick={() => setViewMode("grid")}
+            aria-pressed={viewMode === "grid"}
+          >
+            Grid
+          </button>
         </div>
+
+        {viewMode === "grid" ? (
+          <div className="w-full grid grid-cols-2 gap-1">
+            {posts
+              .filter((post) => post.type === "image")
+              .map((post) => (
+                <Link
+                  key={post.id}
+                  href={`/${username}/post/${post.id}`}
+                  className="block w-full aspect-square relative"
+                  style={{ minWidth: 0 }}
+                >
+                  <Image
+                    src={post.url}
+                    alt=""
+                    fill
+                    className="object-cover w-full h-full"
+                    priority={false}
+                  />
+                </Link>
+              ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-4 mb-8">
+            {session && !isOwnProfile ? (
+              <Link
+                href={`/${username}/feed`}
+                className="px-4 py-2 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300 transition-colors"
+              >
+                Following Feed
+              </Link>
+            ) : !session ? (
+              <button
+                onClick={() => signIn("google")}
+                className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+              >
+                Log in
+              </button>
+            ) : null}
+          </div>
+        )}
 
         {isOwnProfile && (
           <div className="mb-8 flex justify-center">
@@ -239,31 +285,30 @@ export default function ProfilePage({
         <div className="flex flex-col gap-6">
           {posts.map((post) => (
             <div key={post.id} className="relative group">
-              {post.type === "image" ? (
-                <div className="flex flex-col">
-                  <div className="relative aspect-square">
-                    <Image
-                      src={post.url}
-                      alt={post.caption || "Uploaded image"}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  {(post.caption ||
-                    post.captureDate ||
-                    editingPostId === post.id) && (
+              <Link href={`/${username}/post/${post.id}`}>
+                {post.type === "image" ? (
+                  <div className="flex flex-col">
+                    <div className="relative aspect-square">
+                      <Image
+                        src={post.url}
+                        alt={post.caption || "Uploaded image"}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
                     <div className="flex flex-col gap-1 text-sm text-gray-500 px-4 py-3 border-t border-gray-800">
                       {editingPostId === post.id ? (
                         <div className="flex flex-col gap-2">
                           <textarea
-                            value={editingCaption || post.caption || ""}
+                            value={editingCaption ?? post.caption ?? ""}
                             onChange={(e) => setEditingCaption(e.target.value)}
                             className="w-full p-2 rounded-lg border border-gray-700 bg-background text-foreground resize-none min-h-[80px]"
                             placeholder="Add a caption..."
                           />
                           <div className="flex justify-end gap-2">
                             <button
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.preventDefault();
                                 setEditingCaption(null);
                                 setEditingPostId(null);
                               }}
@@ -272,9 +317,13 @@ export default function ProfilePage({
                               Cancel
                             </button>
                             <button
-                              onClick={() =>
-                                handleEditCaption(post.id, editingCaption || "")
-                              }
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleEditCaption(
+                                  post.id,
+                                  editingCaption ?? ""
+                                );
+                              }}
                               className="px-3 py-1 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
                             >
                               Save
@@ -290,7 +339,8 @@ export default function ProfilePage({
                               </p>
                               {isOwnProfile && (
                                 <button
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.preventDefault();
                                     setEditingCaption(post.caption || "");
                                     setEditingPostId(post.id);
                                   }}
@@ -324,22 +374,22 @@ export default function ProfilePage({
                         </>
                       )}
                     </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col">
-                  <div className="p-6">
-                    <p className="text-lg whitespace-pre-wrap">
-                      {post.content}
-                    </p>
                   </div>
-                  <div className="px-4 py-3 border-t border-gray-800">
-                    <p className="text-sm text-gray-500">
-                      Posted: {formatDate(post.postDate)}
-                    </p>
+                ) : (
+                  <div className="flex flex-col">
+                    <div className="p-6">
+                      <p className="text-lg whitespace-pre-wrap">
+                        {post.content}
+                      </p>
+                    </div>
+                    <div className="px-4 py-3 border-t border-gray-800">
+                      <p className="text-sm text-gray-500">
+                        Posted: {formatDate(post.postDate)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </Link>
 
               {isOwnProfile && (
                 <div className="absolute top-2 right-2">

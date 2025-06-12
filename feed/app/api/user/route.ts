@@ -143,11 +143,11 @@ export async function PATCH(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { bio, settings } = await request.json();
+    const { bio, settings, profilePicture } = await request.json();
     const email = session.user.email;
 
     // Update profile if provided
-    if (bio) {
+    if (bio || profilePicture) {
       const existingProfile = await kv.get<UserProfile>(
         `user:${email}:profile`
       );
@@ -161,6 +161,7 @@ export async function PATCH(request: Request) {
       const updatedProfile: UserProfile = {
         ...existingProfile,
         bio: bio || existingProfile.bio,
+        profilePicture: profilePicture || existingProfile.profilePicture,
       };
 
       // Update both email and username keys

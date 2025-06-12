@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import { useSession } from "next-auth/react";
-import { Post } from "@/app/types";
+import { Post, UserProfile } from "@/app/types";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -15,6 +15,7 @@ export default function FeedPage({
   const { data: session } = useSession();
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { username } = use(params);
@@ -38,6 +39,31 @@ export default function FeedPage({
         }
         const data = await response.json();
         setPosts(data.posts);
+
+        // Fetch profiles for all unique usernames in the posts
+        const uniqueUsernames = Array.from(
+          new Set(data.posts.map((post: Post) => post.username))
+        );
+        const profilePromises = uniqueUsernames.map(
+          async (username: string) => {
+            const profileResponse = await fetch(
+              `/api/user?username=${username}`
+            );
+            if (profileResponse.ok) {
+              const profileData = await profileResponse.json();
+              return [username, profileData.profile] as [string, UserProfile];
+            }
+            return null;
+          }
+        );
+
+        const profileResults = await Promise.all(profilePromises);
+        const profilesMap = Object.fromEntries(
+          profileResults.filter(
+            (result): result is [string, UserProfile] => result !== null
+          )
+        );
+        setProfiles(profilesMap);
       } catch (err) {
         console.error("Error fetching feed:", err);
         setError(err instanceof Error ? err.message : "Failed to fetch feed");
@@ -118,6 +144,16 @@ export default function FeedPage({
               )}
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-2">
+                  <div className="relative w-8 h-8 bg-gray-800">
+                    {profiles[post.username]?.profilePicture && (
+                      <Image
+                        src={profiles[post.username].profilePicture}
+                        alt={`${post.username}'s profile picture`}
+                        fill
+                        className="object-cover"
+                      />
+                    )}
+                  </div>
                   <Link
                     href={`/${post.username}`}
                     className="font-medium hover:text-gray-300 transition-colors"

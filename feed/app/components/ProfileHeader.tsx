@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { UserProfile } from "@/app/types";
+import Image from "next/image";
 
 interface ProfileHeaderProps {
   profile: UserProfile;
@@ -100,10 +101,24 @@ export default function ProfileHeader({
       ) : (
         <div className="space-y-4">
           <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-bold">@{profile.username}</h1>
-              <div className="mt-2 text-sm text-gray-400">
-                <span>{following} following</span>
+            <div className="flex gap-4">
+              <div className="relative w-16 h-16 bg-gray-800">
+                {profile.profilePicture ? (
+                  <Image
+                    src={profile.profilePicture}
+                    alt="Profile picture"
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-800" />
+                )}
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">@{profile.username}</h1>
+                <div className="mt-2 text-sm text-gray-400">
+                  <span>{following} following</span>
+                </div>
               </div>
             </div>
             <div className="flex gap-2">
@@ -122,28 +137,6 @@ export default function ProfileHeader({
                     : isFollowing
                     ? "Unfollow"
                     : "Follow"}
-                </button>
-              )}
-              {isOwnProfile && (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="p-2 rounded-full hover:bg-gray-800 transition-colors"
-                  title="Edit profile"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
                 </button>
               )}
             </div>

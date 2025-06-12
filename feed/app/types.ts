@@ -22,10 +22,11 @@ export interface TextPost extends BasePost {
 export type Post = ImagePost | TextPost;
 
 export interface UserProfile {
-  username: string;
   email: string;
+  username: string;
   displayName: string;
   bio?: string;
+  profilePicture?: string;
   createdAt: string;
 }
 

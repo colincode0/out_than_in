@@ -2,18 +2,19 @@
 
 import { useState, useEffect, use } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Post } from "@/app/types";
+import { useSession } from "next-auth/react";
 
 export default function PostPage({
   params,
 }: {
   params: Promise<{ username: string; id: string }>;
 }) {
+  const { data: session } = useSession();
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { username, id } = use(params);
+  const { id } = use(params);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -34,6 +35,22 @@ export default function PostPage({
 
     fetchPost();
   }, [id]);
+
+  const handleDelete = async () => {
+    if (!post) return;
+    try {
+      const response = await fetch(`/api/posts?id=${post.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete post");
+      }
+      // Redirect to profile after delete
+      window.location.href = `/${post.username}`;
+    } catch {
+      alert("Failed to delete post. Please try again.");
+    }
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString(undefined, {
@@ -67,32 +84,36 @@ export default function PostPage({
     );
   }
 
+  const isOwnPost = session?.user?.email === post.userEmail;
+
   return (
     <div className="min-h-screen p-4">
-      <div className="max-w-2xl mx-auto mt-12">
-        <div className="mb-6">
-          <Link
-            href={`/${username}`}
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-300 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+      <div className="max-w-2xl mx-auto mt-12 relative">
+        {/* Delete button for post owner */}
+        {isOwnPost && (
+          <div className="absolute top-2 right-2 z-10">
+            <button
+              onClick={handleDelete}
+              className="p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+              title="Delete post"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            Back to @{username}
-          </Link>
-        </div>
-
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
         <div className="bg-background border border-gray-800 rounded-lg overflow-hidden">
           {post.type === "image" ? (
             <div className="flex flex-col">

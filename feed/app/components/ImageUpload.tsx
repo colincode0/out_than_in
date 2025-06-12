@@ -207,7 +207,6 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           onChange={handleFileSelect}
           disabled={isUploading}
           className="hidden"

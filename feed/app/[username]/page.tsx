@@ -26,7 +26,7 @@ export default function ProfilePage({
   const [following, setFollowing] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "grid" | "text">("list");
+  const [viewMode, setViewMode] = useState<"list" | "grid" | "text">("grid");
   const { username } = use(params);
 
   const fetchProfile = async () => {

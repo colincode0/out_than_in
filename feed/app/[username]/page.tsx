@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Post, UserProfile } from "@/app/types";
 import ProfileHeader from "@/app/components/ProfileHeader";
@@ -26,7 +26,7 @@ export default function ProfilePage({
   const [following, setFollowing] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<"list" | "grid" | "text">("grid");
   const { username } = use(params);
 
   const fetchProfile = async () => {
@@ -106,11 +106,6 @@ export default function ProfilePage({
 
   const handlePostComplete = async (newPost: Post) => {
     setPosts((prevPosts) => [newPost, ...prevPosts]);
-  };
-
-  const handleDeletePost = async (post: Post) => {
-    setPostToDelete(post.id);
-    setIsDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
@@ -213,6 +208,12 @@ export default function ProfilePage({
           handleFollow={handleFollow}
         />
 
+        {isOwnProfile && (
+          <div className="mb-4 flex justify-center">
+            <PostTypeSelector onPostComplete={handlePostComplete} />
+          </div>
+        )}
+
         {/* View toggle */}
         <div className="flex justify-end mb-4">
           <button
@@ -225,13 +226,22 @@ export default function ProfilePage({
             List
           </button>
           <button
-            className={`px-3 py-1 rounded-r-lg border-t border-b border-r border-gray-700 text-gray-300 ${
+            className={`px-3 py-1 border-t border-b border-gray-700 text-gray-300 ${
               viewMode === "grid" ? "bg-gray-800" : "hover:bg-gray-800"
             }`}
             onClick={() => setViewMode("grid")}
             aria-pressed={viewMode === "grid"}
           >
             Grid
+          </button>
+          <button
+            className={`px-3 py-1 rounded-r-lg border-t border-b border-r border-gray-700 text-gray-300 ${
+              viewMode === "text" ? "bg-gray-800" : "hover:bg-gray-800"
+            }`}
+            onClick={() => setViewMode("text")}
+            aria-pressed={viewMode === "text"}
+          >
+            Text
           </button>
         </div>
 
@@ -256,46 +266,69 @@ export default function ProfilePage({
                 </Link>
               ))}
           </div>
+        ) : viewMode === "text" ? (
+          <div className="flex flex-col gap-6">
+            {posts
+              .filter((post) => post.type === "text")
+              .map((post) => (
+                <Link
+                  key={post.id}
+                  href={`/${username}/post/${post.id}`}
+                  className="block bg-background border border-gray-800 rounded-lg p-6 hover:bg-gray-900 transition-colors"
+                >
+                  <p className="text-lg whitespace-pre-wrap mb-2">
+                    {post.content}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Posted: {formatDate(post.postDate)}
+                  </p>
+                </Link>
+              ))}
+          </div>
         ) : (
-          <div className="flex flex-col items-center gap-4 mb-8">
-            {session && !isOwnProfile ? (
-              <Link
-                href={`/${username}/feed`}
-                className="px-4 py-2 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300 transition-colors"
-              >
-                Following Feed
-              </Link>
-            ) : !session ? (
-              <button
-                onClick={() => signIn("google")}
-                className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-              >
-                Log in
-              </button>
-            ) : null}
-          </div>
-        )}
-
-        {isOwnProfile && (
-          <div className="mb-8 flex justify-center">
-            <PostTypeSelector onPostComplete={handlePostComplete} />
-          </div>
-        )}
-
-        <div className="flex flex-col gap-6">
-          {posts.map((post) => (
-            <div key={post.id} className="relative group">
-              <Link href={`/${username}/post/${post.id}`}>
+          <div className="flex flex-col gap-6">
+            {posts.map((post) => (
+              <div key={post.id} className="relative group">
                 {post.type === "image" ? (
                   <div className="flex flex-col">
                     <div className="relative aspect-square">
-                      <Image
-                        src={post.url}
-                        alt={post.caption || "Uploaded image"}
-                        fill
-                        className="object-cover"
-                      />
+                      <Link href={`/${username}/post/${post.id}`}>
+                        <Image
+                          src={post.url}
+                          alt={post.caption || "Uploaded image"}
+                          fill
+                          className="object-cover"
+                        />
+                      </Link>
                     </div>
+                    {/* Delete button for image posts */}
+                    {isOwnProfile && (
+                      <div className="absolute top-2 right-2">
+                        <button
+                          onClick={() => {
+                            setPostToDelete(post.id);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                          title="Delete post"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
                     <div className="flex flex-col gap-1 text-sm text-gray-500 px-4 py-3 border-t border-gray-800">
                       {editingPostId === post.id ? (
                         <div className="flex flex-col gap-2">
@@ -382,6 +415,34 @@ export default function ProfilePage({
                         {post.content}
                       </p>
                     </div>
+                    {/* Delete button for text posts */}
+                    {isOwnProfile && (
+                      <div className="absolute top-2 right-2">
+                        <button
+                          onClick={() => {
+                            setPostToDelete(post.id);
+                            setIsDeleteModalOpen(true);
+                          }}
+                          className="p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                          title="Delete post"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
                     <div className="px-4 py-3 border-t border-gray-800">
                       <p className="text-sm text-gray-500">
                         Posted: {formatDate(post.postDate)}
@@ -389,35 +450,10 @@ export default function ProfilePage({
                     </div>
                   </div>
                 )}
-              </Link>
-
-              {isOwnProfile && (
-                <div className="absolute top-2 right-2">
-                  <button
-                    onClick={() => handleDeletePost(post)}
-                    className="p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
-                    title="Delete post"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <DeleteConfirmationModal

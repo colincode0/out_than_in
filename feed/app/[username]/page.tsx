@@ -335,7 +335,7 @@ export default function ProfilePage({
                           <textarea
                             value={editingCaption ?? post.caption ?? ""}
                             onChange={(e) => setEditingCaption(e.target.value)}
-                            className="w-full p-2 rounded-lg border border-gray-700 bg-background text-foreground resize-none min-h-[80px]"
+                            className="w-full p-2 rounded-lg border border-gray-700 bg-background text-foreground resize-none min-h-[80px] text-base"
                             placeholder="Add a caption..."
                           />
                           <div className="flex justify-end gap-2">

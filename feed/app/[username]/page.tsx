@@ -26,6 +26,7 @@ export default function ProfilePage({
   const [following, setFollowing] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const { username } = use(params);
 
   const fetchProfile = async () => {
@@ -212,23 +213,68 @@ export default function ProfilePage({
           handleFollow={handleFollow}
         />
 
-        <div className="flex flex-col items-center gap-4 mb-8">
-          {session && !isOwnProfile ? (
-            <Link
-              href={`/${username}/feed`}
-              className="px-4 py-2 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300 transition-colors"
-            >
-              Following Feed
-            </Link>
-          ) : !session ? (
-            <button
-              onClick={() => signIn("google")}
-              className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-            >
-              Log in
-            </button>
-          ) : null}
+        {/* View toggle */}
+        <div className="flex justify-end mb-4">
+          <button
+            className={`px-3 py-1 rounded-l-lg border border-gray-700 text-gray-300 ${
+              viewMode === "list" ? "bg-gray-800" : "hover:bg-gray-800"
+            }`}
+            onClick={() => setViewMode("list")}
+            aria-pressed={viewMode === "list"}
+          >
+            List
+          </button>
+          <button
+            className={`px-3 py-1 rounded-r-lg border-t border-b border-r border-gray-700 text-gray-300 ${
+              viewMode === "grid" ? "bg-gray-800" : "hover:bg-gray-800"
+            }`}
+            onClick={() => setViewMode("grid")}
+            aria-pressed={viewMode === "grid"}
+          >
+            Grid
+          </button>
         </div>
+
+        {viewMode === "grid" ? (
+          <div className="w-full grid grid-cols-2 gap-1">
+            {posts
+              .filter((post) => post.type === "image")
+              .map((post) => (
+                <Link
+                  key={post.id}
+                  href={`/${username}/post/${post.id}`}
+                  className="block w-full aspect-square relative"
+                  style={{ minWidth: 0 }}
+                >
+                  <Image
+                    src={post.url}
+                    alt=""
+                    fill
+                    className="object-cover w-full h-full"
+                    priority={false}
+                  />
+                </Link>
+              ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-4 mb-8">
+            {session && !isOwnProfile ? (
+              <Link
+                href={`/${username}/feed`}
+                className="px-4 py-2 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300 transition-colors"
+              >
+                Following Feed
+              </Link>
+            ) : !session ? (
+              <button
+                onClick={() => signIn("google")}
+                className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+              >
+                Log in
+              </button>
+            ) : null}
+          </div>
+        )}
 
         {isOwnProfile && (
           <div className="mb-8 flex justify-center">

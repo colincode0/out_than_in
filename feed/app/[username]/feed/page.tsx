@@ -83,6 +83,17 @@ export default function FeedPage({
     );
   }
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   return (
     <div className="min-h-screen p-4">
       <div className="max-w-2xl mx-auto mt-12">
@@ -113,10 +124,6 @@ export default function FeedPage({
                   >
                     @{post.username}
                   </Link>
-                  <span className="text-gray-400">•</span>
-                  <span className="text-gray-400">
-                    {new Date(post.postDate).toLocaleDateString()}
-                  </span>
                 </div>
                 {post.type === "image" && post.caption && (
                   <p className="text-gray-300 mb-2">{post.caption}</p>
@@ -126,11 +133,12 @@ export default function FeedPage({
                     {post.content}
                   </p>
                 )}
-                {post.type === "image" && post.captureDate && (
-                  <p className="text-sm text-gray-500">
-                    Captured: {new Date(post.captureDate).toLocaleString()}
-                  </p>
-                )}
+                <div className="flex flex-col gap-1 text-sm text-gray-500 mt-2">
+                  <p>Posted: {formatDate(post.postDate)}</p>
+                  {post.type === "image" && post.captureDate && (
+                    <p>Taken: {formatDate(post.captureDate)}</p>
+                  )}
+                </div>
               </div>
             </div>
           ))}

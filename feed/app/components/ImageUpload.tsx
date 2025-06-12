@@ -24,27 +24,125 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
     if (!file) return;
 
     setError(null);
-    setSelectedFile(file);
 
-    // Create preview URL
-    const preview = URL.createObjectURL(file);
-    setPreviewUrl(preview);
+    // Check file size (10MB limit)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > MAX_FILE_SIZE) {
+      setError("File size must be less than 10MB");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
 
-    // Extract EXIF data
+    // Check if file is an image
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const exifr = (await import("exifr")).default;
-      const exifData = await exifr.parse(buffer);
-      if (exifData?.DateTimeOriginal) {
-        setExifData({
-          captureDate: new Date(exifData.DateTimeOriginal).toISOString(),
-        });
+      // Create a compressed version of the image
+      const compressedFile = await compressImage(file);
+      setSelectedFile(compressedFile);
+
+      // Create preview URL from compressed file
+      const preview = URL.createObjectURL(compressedFile);
+      setPreviewUrl(preview);
+
+      // Extract EXIF data
+      try {
+        const arrayBuffer = await compressedFile.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const exifr = (await import("exifr")).default;
+        const exifData = await exifr.parse(buffer);
+        if (exifData?.DateTimeOriginal) {
+          setExifData({
+            captureDate: new Date(exifData.DateTimeOriginal).toISOString(),
+          });
+        }
+      } catch (err) {
+        console.log("No EXIF data found or error reading EXIF:", err);
+        setExifData({ captureDate: null });
       }
     } catch (err) {
-      console.log("No EXIF data found or error reading EXIF:", err);
-      setExifData({ captureDate: null });
+      console.error("Error processing image:", err);
+      setError("Error processing image. Please try again.");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
+  };
+
+  // Add image compression function
+  const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions while maintaining aspect ratio
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = Math.round((height * MAX_WIDTH) / width);
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = Math.round((width * MAX_HEIGHT) / height);
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("Could not get canvas context"));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to blob with reduced quality
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error("Could not create blob"));
+                return;
+              }
+              // Create a new file from the blob
+              const compressedFile = new File([blob], file.name, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            },
+            "image/jpeg",
+            0.85 // 85% quality
+          );
+        };
+        img.onerror = () => {
+          reject(new Error("Error loading image"));
+        };
+      };
+      reader.onerror = () => {
+        reject(new Error("Error reading file"));
+      };
+    });
   };
 
   const handlePost = async () => {
@@ -109,6 +207,7 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          capture="environment"
           onChange={handleFileSelect}
           disabled={isUploading}
           className="hidden"
@@ -122,7 +221,7 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
               : "bg-foreground text-background hover:bg-[#383838] dark:hover:bg-[#ccc]"
           } font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5`}
         >
-          {isUploading ? "Uploading..." : "Select Image"}
+          {isUploading ? "Uploading..." : "Select Photo"}
         </label>
       </div>
 

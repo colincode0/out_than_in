@@ -33,9 +33,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    // Get following and followers counts
+    // Get following count
     const following = await kv.smembers(`user:${profile.email}:following`);
-    const followers = await kv.smembers(`user:${profile.email}:followers`);
 
     // Only fetch settings if user is authenticated and viewing their own profile
     const session = await getServerSession(authConfig);
@@ -60,7 +59,6 @@ export async function GET(request: Request) {
       profile,
       settings,
       following: following.length,
-      followers: followers.length,
       isFollowing,
     });
   } catch (error) {

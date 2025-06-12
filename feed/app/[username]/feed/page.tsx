@@ -44,8 +44,8 @@ export default function FeedPage({
         const uniqueUsernames = Array.from(
           new Set(data.posts.map((post: Post) => post.username))
         );
-        const profilePromises = uniqueUsernames.map(
-          async (username: string) => {
+        const profilePromises = uniqueUsernames.map((username) => {
+          return (async () => {
             const profileResponse = await fetch(
               `/api/user?username=${username}`
             );
@@ -54,8 +54,8 @@ export default function FeedPage({
               return [username, profileData.profile] as [string, UserProfile];
             }
             return null;
-          }
-        );
+          })();
+        });
 
         const profileResults = await Promise.all(profilePromises);
         const profilesMap = Object.fromEntries(
@@ -145,14 +145,14 @@ export default function FeedPage({
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="relative w-8 h-8 bg-gray-800">
-                    {profiles[post.username]?.profilePicture && (
+                    {profiles[post.username]?.profilePicture ? (
                       <Image
-                        src={profiles[post.username].profilePicture}
+                        src={profiles[post.username].profilePicture as string}
                         alt={`${post.username}'s profile picture`}
                         fill
                         className="object-cover"
                       />
-                    )}
+                    ) : null}
                   </div>
                   <Link
                     href={`/${post.username}`}

@@ -72,17 +72,9 @@ export default function FeedPage({
   if (posts.length === 0) {
     return (
       <div className="min-h-screen p-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex justify-center mb-8">
-            <Link
-              href={`/${username}`}
-              className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
-            >
-              Back to @{username}
-            </Link>
-          </div>
+        <div className="max-w-2xl mx-auto mt-12">
           <div className="text-center">
-            <p className="text-xl text-gray-400">
+            <p className="text-xl text-white">
               @{username} is not following anyone yet
             </p>
           </div>
@@ -93,18 +85,11 @@ export default function FeedPage({
 
   return (
     <div className="min-h-screen p-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex justify-center mb-8">
-          <Link
-            href={`/${username}`}
-            className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
-          >
-            Back to @{username}
-          </Link>
-        </div>
-
+      <div className="max-w-2xl mx-auto mt-12">
         <div className="space-y-8">
-          <h1 className="text-2xl font-bold mb-6">Following Feed</h1>
+          <h1 className="text-xl font-bold mb-6 text-center text-white">
+            Following
+          </h1>
           {posts.map((post) => (
             <div
               key={post.id}

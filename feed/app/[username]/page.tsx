@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useSession, signOut, signIn } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import Image from "next/image";
 import { Post, UserProfile } from "@/app/types";
 import ProfileHeader from "@/app/components/ProfileHeader";
@@ -24,8 +24,8 @@ export default function ProfilePage({
   const [editingCaption, setEditingCaption] = useState<string | null>(null);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [following, setFollowing] = useState(0);
-  const [followers, setFollowers] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
   const { username } = use(params);
 
   const fetchProfile = async () => {
@@ -42,7 +42,6 @@ export default function ProfilePage({
       const data = await response.json();
       setProfile(data.profile);
       setFollowing(data.following);
-      setFollowers(data.followers);
       setIsFollowing(data.isFollowing);
     } catch (err) {
       console.error("Error fetching profile:", err);
@@ -61,6 +60,37 @@ export default function ProfilePage({
     } catch (err) {
       console.error("Error fetching posts:", err);
       setError(err instanceof Error ? err.message : "Failed to fetch posts");
+    }
+  };
+
+  const handleFollow = async () => {
+    if (!session?.user?.email) return;
+    setIsFollowLoading(true);
+    try {
+      const response = await fetch("/api/user", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: isFollowing ? "unfollow" : "follow",
+          targetUsername: profile?.username,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update following status");
+      }
+
+      setIsFollowing(!isFollowing);
+      fetchProfile();
+    } catch (err) {
+      console.error("Error updating following status:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to update following status"
+      );
+    } finally {
+      setIsFollowLoading(false);
     }
   };
 
@@ -172,41 +202,32 @@ export default function ProfilePage({
 
   return (
     <div className="min-h-screen p-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto mt-12">
         <ProfileHeader
           profile={profile}
           onProfileUpdate={fetchProfile}
           following={following}
-          followers={followers}
           isFollowing={isFollowing}
+          isFollowLoading={isFollowLoading}
+          handleFollow={handleFollow}
         />
 
-        <div className="flex justify-center gap-4 mb-8">
-          {session ? (
-            <>
-              <Link
-                href={`/${username}/feed`}
-                className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
-              >
-                Following Feed
-              </Link>
-              {isOwnProfile && (
-                <button
-                  onClick={() => signOut()}
-                  className="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
-                >
-                  Sign out
-                </button>
-              )}
-            </>
-          ) : (
+        <div className="flex flex-col items-center gap-4 mb-8">
+          {session && !isOwnProfile ? (
+            <Link
+              href={`/${username}/feed`}
+              className="px-4 py-2 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300 transition-colors"
+            >
+              Following Feed
+            </Link>
+          ) : !session ? (
             <button
               onClick={() => signIn("google")}
               className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
             >
               Log in
             </button>
-          )}
+          ) : null}
         </div>
 
         {isOwnProfile && (

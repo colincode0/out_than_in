@@ -8,57 +8,26 @@ interface ProfileHeaderProps {
   profile: UserProfile;
   onProfileUpdate?: () => void;
   following: number;
-  followers: number;
-  isFollowing: boolean;
+  isFollowing?: boolean;
+  isFollowLoading?: boolean;
+  handleFollow?: () => void;
 }
 
 export default function ProfileHeader({
   profile,
   onProfileUpdate,
   following,
-  followers,
-  isFollowing: initialIsFollowing,
+  isFollowing = false,
+  isFollowLoading = false,
+  handleFollow,
 }: ProfileHeaderProps) {
   const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
   const [bio, setBio] = useState(profile.bio);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
-  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   const isOwnProfile = session?.user?.email === profile.email;
-
-  const handleFollow = async () => {
-    if (!session?.user?.email) return;
-    setIsFollowLoading(true);
-    try {
-      const response = await fetch("/api/user", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: isFollowing ? "unfollow" : "follow",
-          targetUsername: profile.username,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update following status");
-      }
-
-      setIsFollowing(!isFollowing);
-      onProfileUpdate?.();
-    } catch (err) {
-      console.error("Error updating following status:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to update following status"
-      );
-    } finally {
-      setIsFollowLoading(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,19 +104,17 @@ export default function ProfileHeader({
               <h1 className="text-2xl font-bold">@{profile.username}</h1>
               <div className="mt-2 text-sm text-gray-400">
                 <span>{following} following</span>
-                <span className="mx-2">•</span>
-                <span>{followers} followers</span>
               </div>
             </div>
             <div className="flex gap-2">
-              {!isOwnProfile && session?.user?.email && (
+              {!isOwnProfile && session?.user?.email && handleFollow && (
                 <button
                   onClick={handleFollow}
                   disabled={isFollowLoading}
                   className={`px-4 py-2 rounded-lg ${
                     isFollowing
                       ? "border border-gray-700 hover:bg-gray-800 text-gray-300"
-                      : "bg-blue-500 text-white hover:bg-blue-600"
+                      : "border border-gray-700 hover:bg-gray-800 text-white"
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {isFollowLoading

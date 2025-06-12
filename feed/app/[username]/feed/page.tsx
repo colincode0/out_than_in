@@ -132,50 +132,53 @@ export default function FeedPage({
               key={post.id}
               className="bg-background border border-gray-800 rounded-lg overflow-hidden"
             >
-              {post.type === "image" && (
-                <div className="relative aspect-square">
-                  <Image
-                    src={post.url}
-                    alt={post.caption || "Post image"}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="relative w-8 h-8 bg-gray-800">
-                    {profiles[post.username]?.profilePicture ? (
-                      <Image
-                        src={profiles[post.username].profilePicture as string}
-                        alt={`${post.username}'s profile picture`}
-                        fill
-                        className="object-cover"
-                      />
-                    ) : null}
+              <Link href={`/${post.username}/post/${post.id}`}>
+                {post.type === "image" && (
+                  <div className="relative aspect-square">
+                    <Image
+                      src={post.url}
+                      alt={post.caption || "Post image"}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-                  <Link
-                    href={`/${post.username}`}
-                    className="font-medium hover:text-gray-300 transition-colors"
-                  >
-                    @{post.username}
-                  </Link>
-                </div>
-                {post.type === "image" && post.caption && (
-                  <p className="text-gray-300 mb-2">{post.caption}</p>
                 )}
-                {post.type === "text" && (
-                  <p className="text-gray-300 whitespace-pre-wrap">
-                    {post.content}
-                  </p>
-                )}
-                <div className="flex flex-col gap-1 text-sm text-gray-500 mt-2">
-                  <p>Posted: {formatDate(post.postDate)}</p>
-                  {post.type === "image" && post.captureDate && (
-                    <p>Taken: {formatDate(post.captureDate)}</p>
+                <div className="p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="relative w-8 h-8 bg-gray-800">
+                      {profiles[post.username]?.profilePicture ? (
+                        <Image
+                          src={profiles[post.username].profilePicture as string}
+                          alt={`${post.username}'s profile picture`}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : null}
+                    </div>
+                    <Link
+                      href={`/${post.username}`}
+                      className="font-medium hover:text-gray-300 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      @{post.username}
+                    </Link>
+                  </div>
+                  {post.type === "image" && post.caption && (
+                    <p className="text-gray-300 mb-2">{post.caption}</p>
                   )}
+                  {post.type === "text" && (
+                    <p className="text-gray-300 whitespace-pre-wrap">
+                      {post.content}
+                    </p>
+                  )}
+                  <div className="flex flex-col gap-1 text-sm text-gray-500 mt-2">
+                    <p>Posted: {formatDate(post.postDate)}</p>
+                    {post.type === "image" && post.captureDate && (
+                      <p>Taken: {formatDate(post.captureDate)}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </Link>
             </div>
           ))}
         </div>

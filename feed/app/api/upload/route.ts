@@ -27,18 +27,24 @@ export async function POST(request: Request) {
     const file = formData.get("file") as File;
     const caption = formData.get("caption") as string;
     const captureDate = formData.get("captureDate") as string;
+    const type = formData.get("type") as string;
 
     if (!file) {
       console.log("No file provided in request");
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Check file size (10MB limit)
-    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+    // Check file size (10MB limit for posts, 5MB for profile pictures)
+    const MAX_FILE_SIZE =
+      type === "profile" ? 5 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
       console.log("File too large:", file.size);
       return NextResponse.json(
-        { error: "File size must be less than 10MB" },
+        {
+          error: `File size must be less than ${
+            type === "profile" ? "5MB" : "10MB"
+          }`,
+        },
         { status: 400 }
       );
     }
@@ -63,20 +69,32 @@ export async function POST(request: Request) {
       console.log("No EXIF data found or error reading EXIF:", exifError);
     }
 
-    // Process image to remove metadata and resize if needed
+    // Process image based on type
     let processedImageBuffer: Buffer;
     try {
       const image = sharp(buffer);
 
-      // Resize image to max 1200px on longest side while maintaining aspect ratio
-      processedImageBuffer = await image
-        .resize(1200, 1200, {
-          fit: "inside",
-          withoutEnlargement: true,
-        })
-        .webp({ quality: 85 }) // Convert to WebP with 85% quality
-        .withMetadata() // Keep orientation metadata
-        .toBuffer();
+      if (type === "profile") {
+        // For profile pictures, create a square crop
+        processedImageBuffer = await image
+          .resize(400, 400, {
+            fit: "cover",
+            position: "center",
+          })
+          .webp({ quality: 85 })
+          .withMetadata()
+          .toBuffer();
+      } else {
+        // For post images, maintain aspect ratio
+        processedImageBuffer = await image
+          .resize(1200, 1200, {
+            fit: "inside",
+            withoutEnlargement: true,
+          })
+          .webp({ quality: 85 })
+          .withMetadata()
+          .toBuffer();
+      }
 
       console.log("Image processed successfully");
     } catch (sharpError) {
@@ -89,9 +107,10 @@ export async function POST(request: Request) {
 
     // Generate a unique filename and ID
     const timestamp = Date.now();
-    const id = `img_${timestamp}_${Math.random()
-      .toString(36)
-      .substring(2, 15)}`;
+    const id =
+      type === "profile"
+        ? `profile_${timestamp}_${Math.random().toString(36).substring(2, 15)}`
+        : `img_${timestamp}_${Math.random().toString(36).substring(2, 15)}`;
     const baseFilename = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
     const filename = `${timestamp}-${baseFilename}.webp`; // Use .webp extension
     console.log("Generated filename:", filename);
@@ -114,7 +133,12 @@ export async function POST(request: Request) {
         throw new Error("User profile not found");
       }
 
-      // Create post metadata
+      if (type === "profile") {
+        // For profile pictures, just return the URL
+        return NextResponse.json({ url: blob.url });
+      }
+
+      // For post images, create post metadata
       const postDate = new Date().toISOString();
       const username = profile.username;
 

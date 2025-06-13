@@ -14,6 +14,7 @@ export default function PostPage({
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingCaption, setEditingCaption] = useState<string | null>(null);
   const { id } = use(params);
 
   useEffect(() => {
@@ -49,6 +50,30 @@ export default function PostPage({
       window.location.href = `/${post.username}`;
     } catch {
       alert("Failed to delete post. Please try again.");
+    }
+  };
+
+  const handleEditCaption = async (newCaption: string) => {
+    if (!post) return;
+    try {
+      const response = await fetch(`/api/posts?id=${post.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ caption: newCaption }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update caption");
+      }
+
+      const updatedPost = await response.json();
+      setPost(updatedPost);
+      setEditingCaption(null);
+    } catch (err) {
+      console.error("Error updating caption:", err);
+      alert("Failed to update caption. Please try again.");
     }
   };
 
@@ -126,8 +151,63 @@ export default function PostPage({
                 />
               </div>
               <div className="flex flex-col gap-1 text-sm text-gray-500 px-4 py-3 border-t border-gray-800">
-                {post.caption && (
-                  <p className="text-sm whitespace-pre-wrap">{post.caption}</p>
+                {editingCaption !== null ? (
+                  <div className="flex flex-col gap-2">
+                    <textarea
+                      value={editingCaption}
+                      onChange={(e) => setEditingCaption(e.target.value)}
+                      className="w-full p-2 rounded-lg border border-gray-700 bg-background text-foreground resize-none min-h-[80px] text-base"
+                      placeholder="Add a caption..."
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => setEditingCaption(null)}
+                        className="px-3 py-1 rounded-lg border border-gray-700 hover:bg-gray-800 text-gray-300"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleEditCaption(editingCaption)}
+                        className="px-3 py-1 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {post.caption && (
+                      <div className="flex justify-between items-start gap-2">
+                        <p className="text-sm whitespace-pre-wrap flex-1">
+                          {post.caption}
+                        </p>
+                        {isOwnPost && (
+                          <button
+                            onClick={() =>
+                              setEditingCaption(post.caption || "")
+                            }
+                            className="p-1 rounded-full hover:bg-gray-800 transition-colors"
+                            title="Edit caption"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
                 <div className="flex flex-col gap-1">
                   <p>Posted: {formatDate(post.postDate)}</p>

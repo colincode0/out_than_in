@@ -5,6 +5,7 @@ import { Providers } from "./providers";
 import { getServerSession } from "next-auth";
 import { authConfig } from "./auth";
 import Drawer from "./components/Drawer";
+import PostButton from "./components/PostButton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default async function RootLayout({
       >
         <Providers session={session}>
           <Drawer />
+          <PostButton />
           {children}
         </Providers>
       </body>

@@ -5,9 +5,9 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Post, UserProfile } from "@/app/types";
 import ProfileHeader from "@/app/components/ProfileHeader";
-import PostTypeSelector from "@/app/components/PostTypeSelector";
 import DeleteConfirmationModal from "@/app/components/DeleteConfirmationModal";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 export default function ProfilePage({
   params,
@@ -26,7 +26,10 @@ export default function ProfilePage({
   const [following, setFollowing] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "grid" | "text">("grid");
+  const searchParams = useSearchParams();
+  const [viewMode, setViewMode] = useState<"list" | "grid" | "text">(
+    (searchParams.get("viewMode") as "list" | "grid" | "text") || "grid"
+  );
   const { username } = use(params);
 
   const fetchProfile = async () => {
@@ -103,10 +106,6 @@ export default function ProfilePage({
     };
     fetchData();
   }, [username]);
-
-  const handlePostComplete = async (newPost: Post) => {
-    setPosts((prevPosts) => [newPost, ...prevPosts]);
-  };
 
   const handleConfirmDelete = async () => {
     if (!postToDelete) return;
@@ -208,14 +207,8 @@ export default function ProfilePage({
           handleFollow={handleFollow}
         />
 
-        {isOwnProfile && (
-          <div className="mb-4 flex justify-center">
-            <PostTypeSelector onPostComplete={handlePostComplete} />
-          </div>
-        )}
-
         {/* View toggle */}
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-center mb-4">
           <button
             className={`px-3 py-1 rounded-l-lg border border-gray-700 text-gray-300 ${
               viewMode === "list" ? "bg-gray-800" : "hover:bg-gray-800"
@@ -274,8 +267,36 @@ export default function ProfilePage({
                 <Link
                   key={post.id}
                   href={`/${username}/post/${post.id}`}
-                  className="block bg-background border border-gray-800 rounded-lg p-6 hover:bg-gray-900 transition-colors"
+                  className="block bg-background border border-gray-800 rounded-lg p-6 hover:bg-gray-900 transition-colors relative"
                 >
+                  {isOwnProfile && (
+                    <div className="absolute top-2 right-2">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setPostToDelete(post.id);
+                          setIsDeleteModalOpen(true);
+                        }}
+                        className="p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
+                        title="Delete post"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                   <p className="text-lg whitespace-pre-wrap mb-2">
                     {post.content}
                   </p>
@@ -409,7 +430,7 @@ export default function ProfilePage({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col">
+                  <div className="flex flex-col bg-background border border-gray-800 rounded-lg overflow-hidden">
                     <div className="p-6">
                       <p className="text-lg whitespace-pre-wrap">
                         {post.content}

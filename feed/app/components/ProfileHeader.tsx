@@ -61,7 +61,7 @@ export default function ProfileHeader({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto mb-8 p-6 bg-background border border-gray-800 rounded-lg">
+    <div className="w-full max-w-4xl mx-auto mb-4 p-6 bg-background border border-gray-800 rounded-lg">
       {isEditing ? (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

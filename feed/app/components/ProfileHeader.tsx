@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { UserProfile } from "@/app/types";
 import Image from "next/image";
+import Link from "next/link";
 
 interface ProfileHeaderProps {
   profile: UserProfile;
@@ -117,7 +118,12 @@ export default function ProfileHeader({
               <div>
                 <h1 className="text-2xl font-bold">@{profile.username}</h1>
                 <div className="mt-2 text-sm text-gray-400">
-                  <span>{following} following</span>
+                  <Link
+                    href={`/${profile.username}/following`}
+                    className="hover:text-gray-300 transition-colors"
+                  >
+                    {following} following
+                  </Link>
                 </div>
               </div>
             </div>

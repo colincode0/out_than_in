@@ -4,6 +4,8 @@ import { useState, useEffect, use } from "react";
 import Image from "next/image";
 import { Post } from "@/app/types";
 import { useSession } from "next-auth/react";
+import DeleteConfirmationModal from "@/app/components/DeleteConfirmationModal";
+import { useRouter } from "next/navigation";
 
 export default function PostPage({
   params,
@@ -11,10 +13,12 @@ export default function PostPage({
   params: Promise<{ username: string; id: string }>;
 }) {
   const { data: session } = useSession();
+  const router = useRouter();
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingCaption, setEditingCaption] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { id } = use(params);
 
   useEffect(() => {
@@ -46,8 +50,7 @@ export default function PostPage({
       if (!response.ok) {
         throw new Error("Failed to delete post");
       }
-      // Redirect to profile after delete
-      window.location.href = `/${post.username}`;
+      router.push(`/${post.username}`);
     } catch {
       alert("Failed to delete post. Please try again.");
     }
@@ -118,7 +121,7 @@ export default function PostPage({
         {isOwnPost && (
           <div className="absolute top-2 right-2 z-10">
             <button
-              onClick={handleDelete}
+              onClick={() => setIsDeleteModalOpen(true)}
               className="p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-colors"
               title="Delete post"
             >
@@ -230,6 +233,12 @@ export default function PostPage({
             </div>
           )}
         </div>
+
+        <DeleteConfirmationModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleDelete}
+        />
       </div>
     </div>
   );

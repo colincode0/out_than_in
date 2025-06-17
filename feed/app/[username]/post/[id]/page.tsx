@@ -153,7 +153,7 @@ export default function PostPage({
                   className="object-cover"
                 />
               </div>
-              <div className="flex flex-col gap-1 text-sm text-gray-500 px-4 py-3 border-t border-gray-800">
+              <div className="flex flex-col gap-1 text-gray-500 px-4 py-3 border-t border-gray-800">
                 {editingCaption !== null ? (
                   <div className="flex flex-col gap-2">
                     <textarea
@@ -181,7 +181,7 @@ export default function PostPage({
                   <>
                     {post.caption && (
                       <div className="flex justify-between items-start gap-2">
-                        <p className="text-sm whitespace-pre-wrap flex-1">
+                        <p className="text-gray-300 whitespace-pre-wrap flex-1">
                           {post.caption}
                         </p>
                         {isOwnPost && (

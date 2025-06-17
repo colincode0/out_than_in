@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { UserProfile } from "@/app/types";
+import ImageCropper from "@/app/components/ImageCropper";
 
 export default function SettingsPage() {
   const { data: session, status } = useSession();
@@ -15,6 +16,8 @@ export default function SettingsPage() {
   const [bio, setBio] = useState("");
   const [isSavingBio, setIsSavingBio] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -57,10 +60,29 @@ export default function SettingsPage() {
       return;
     }
 
+    // Create a URL for the selected image and show the cropper
+    const imageUrl = URL.createObjectURL(file);
+    setSelectedImageUrl(imageUrl);
+    setShowCropper(true);
+
+    // Clear the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleCropComplete = async (croppedImageBlob: Blob) => {
     try {
       setIsUploading(true);
+      setShowCropper(false);
+      setSelectedImageUrl(null);
 
-      // Upload the image
+      // Create a File object from the blob
+      const file = new File([croppedImageBlob], "profile-picture.jpg", {
+        type: "image/jpeg",
+      });
+
+      // Upload the cropped image
       const formData = new FormData();
       formData.append("file", file);
       formData.append("type", "profile");
@@ -99,10 +121,6 @@ export default function SettingsPage() {
         const profileData = await updatedResponse.json();
         setProfile(profileData.profile);
       }
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
     } catch (err) {
       console.error("Error uploading profile picture:", err);
       setError(
@@ -111,6 +129,11 @@ export default function SettingsPage() {
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setSelectedImageUrl(null);
   };
 
   const handleSaveBio = async () => {
@@ -276,6 +299,15 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {showCropper && selectedImageUrl && (
+        <ImageCropper
+          imageUrl={selectedImageUrl}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspectRatio={1}
+        />
+      )}
     </div>
   );
 }

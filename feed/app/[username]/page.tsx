@@ -8,6 +8,7 @@ import ProfileHeader from "@/app/components/ProfileHeader";
 import DeleteConfirmationModal from "@/app/components/DeleteConfirmationModal";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import QRCodeModal from "@/app/components/QRCodeModal";
 
 export default function ProfilePage({
   params,
@@ -26,6 +27,7 @@ export default function ProfilePage({
   const [following, setFollowing] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<"list" | "grid" | "text">(
     (searchParams.get("viewMode") as "list" | "grid" | "text") || "grid"
@@ -205,6 +207,7 @@ export default function ProfilePage({
           isFollowing={isFollowing}
           isFollowLoading={isFollowLoading}
           handleFollow={handleFollow}
+          onQRCodeClick={() => setIsQRModalOpen(true)}
         />
 
         {/* View toggle */}
@@ -388,7 +391,7 @@ export default function ProfilePage({
                         <>
                           {post.caption && (
                             <div className="flex justify-between items-start gap-2">
-                              <p className="text-sm whitespace-pre-wrap flex-1">
+                              <p className="text-gray-300 whitespace-pre-wrap flex-1">
                                 {post.caption}
                               </p>
                               {isOwnProfile && (
@@ -484,6 +487,13 @@ export default function ProfilePage({
           setPostToDelete(null);
         }}
         onConfirm={handleConfirmDelete}
+      />
+
+      <QRCodeModal
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+        profileUrl={`${window.location.origin}/${username}`}
+        username={username}
       />
     </div>
   );

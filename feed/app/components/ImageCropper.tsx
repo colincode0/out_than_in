@@ -14,6 +14,7 @@ interface ImageCropperProps {
   onCropComplete: (croppedImageBlob: Blob) => void;
   onCancel: () => void;
   aspectRatio?: number;
+  title?: string;
 }
 
 function centerAspectCrop(
@@ -41,6 +42,7 @@ export default function ImageCropper({
   onCropComplete,
   onCancel,
   aspectRatio = 1,
+  title = "Crop Image",
 }: ImageCropperProps) {
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
@@ -107,7 +109,7 @@ export default function ImageCropper({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
       <div className="bg-background border border-gray-800 rounded-lg p-6 max-w-md w-full">
-        <h3 className="text-lg font-semibold mb-4">Crop Profile Picture</h3>
+        <h3 className="text-lg font-semibold mb-4">{title}</h3>
 
         <div className="mb-4">
           <ReactCrop

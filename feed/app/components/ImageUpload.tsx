@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import { ImagePost } from "@/app/types";
+import ImageCropper from "./ImageCropper";
 
 interface ImageUploadProps {
   onUploadComplete?: (post: ImagePost) => void;
@@ -15,6 +16,8 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
   const [exifData, setExifData] = useState<{ captureDate: string | null }>({
     captureDate: null,
   });
@@ -45,7 +48,35 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
     }
 
     try {
-      // Create a compressed version of the image
+      // Create a URL for the selected image and show the cropper
+      const imageUrl = URL.createObjectURL(file);
+      setOriginalImageUrl(imageUrl);
+      setShowCropper(true);
+
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (err) {
+      console.error("Error processing image:", err);
+      setError("Error processing image. Please try again.");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleCropComplete = async (croppedImageBlob: Blob) => {
+    try {
+      setShowCropper(false);
+      setOriginalImageUrl(null);
+
+      // Create a File object from the blob
+      const file = new File([croppedImageBlob], "cropped-image.jpg", {
+        type: "image/jpeg",
+      });
+
+      // Create a compressed version of the cropped image
       const compressedFile = await compressImage(file);
       setSelectedFile(compressedFile);
 
@@ -69,12 +100,14 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
         setExifData({ captureDate: null });
       }
     } catch (err) {
-      console.error("Error processing image:", err);
-      setError("Error processing image. Please try again.");
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      console.error("Error processing cropped image:", err);
+      setError("Error processing cropped image. Please try again.");
     }
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setOriginalImageUrl(null);
   };
 
   // Add image compression function
@@ -270,6 +303,16 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {showCropper && originalImageUrl && (
+        <ImageCropper
+          imageUrl={originalImageUrl}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspectRatio={1}
+          title="Crop Photo"
+        />
       )}
     </div>
   );

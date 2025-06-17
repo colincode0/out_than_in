@@ -17,6 +17,7 @@ export default function QRCodeModal({
   username,
 }: QRCodeModalProps) {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (isOpen && profileUrl) {
@@ -36,6 +37,16 @@ export default function QRCodeModal({
         });
     }
   }, [isOpen, profileUrl]);
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(profileUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -79,6 +90,25 @@ export default function QRCodeModal({
               <p className="text-gray-400">Generating QR code...</p>
             </div>
           )}
+        </div>
+
+        <div className="flex items-center gap-2 mb-4 p-3 bg-gray-900 rounded-lg">
+          <input
+            type="text"
+            value={profileUrl}
+            readOnly
+            className="flex-1 bg-transparent text-sm text-gray-300 outline-none"
+          />
+          <button
+            onClick={handleCopyLink}
+            className={`px-3 py-1 rounded text-sm transition-colors ${
+              copied
+                ? "bg-green-600 text-white"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
+          >
+            {copied ? "Copied!" : "Copy"}
+          </button>
         </div>
 
         <p className="text-sm text-gray-400 text-center">

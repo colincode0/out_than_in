@@ -242,7 +242,7 @@ export default function ProfilePage({
         </div>
 
         {viewMode === "grid" ? (
-          <div className="w-full grid grid-cols-2 gap-1">
+          <div className="w-full grid grid-cols-4 gap-1">
             {posts
               .filter((post) => post.type === "image")
               .map((post) => (

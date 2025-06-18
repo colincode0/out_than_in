@@ -3,4 +3,3 @@ no display of followers, what if there was a leaderboard like top followed accou
 and then for each user it has a # like #1582
  - which would mean the #1582 most followed account
 
- QR code follow for each profile

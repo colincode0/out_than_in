@@ -17,7 +17,15 @@ export async function GET(request: Request) {
       if (!post) {
         return NextResponse.json({ error: "Post not found" }, { status: 404 });
       }
-      return NextResponse.json(post);
+
+      // Get comment count for the post
+      const commentCount = await kv.zcard(`post:${id}:comments`);
+      const postWithCommentCount = {
+        ...post,
+        commentCount,
+      };
+
+      return NextResponse.json(postWithCommentCount);
     }
 
     // Otherwise, fetch posts by username
@@ -34,17 +42,25 @@ export async function GET(request: Request) {
     });
     console.log("Found post IDs:", postIds.length);
 
-    // Fetch all post metadata
+    // Fetch all post metadata with comment counts
     const posts = await Promise.all(
       postIds.map(async (id) => {
         const post = await kv.get<Post>(`post:${id}`);
-        return post;
+        if (!post) return null;
+
+        // Get comment count for each post
+        const commentCount = await kv.zcard(`post:${id}:comments`);
+        return {
+          ...post,
+          commentCount,
+        };
       })
     );
 
     // Filter out null posts and hidden posts
     const validPosts = posts.filter(
-      (post): post is Post => post !== null && !post.hidden
+      (post): post is Post & { commentCount: number } =>
+        post !== null && !post.hidden
     );
     console.log("Returning posts:", validPosts.length);
     return NextResponse.json(validPosts);

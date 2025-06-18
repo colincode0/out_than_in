@@ -5,6 +5,7 @@ export interface BasePost {
   userEmail: string;
   postDate: string;
   hidden: boolean;
+  commentCount?: number;
 }
 
 export interface ImagePost extends BasePost {
@@ -33,6 +34,15 @@ export interface UserProfile {
 export interface UserSettings {
   theme: "light" | "dark" | "system";
   emailNotifications: boolean;
+}
+
+export interface Comment {
+  id: string;
+  postId: string;
+  username: string;
+  userEmail: string;
+  content: string;
+  createdAt: string;
 }
 
 declare module "next-auth" {

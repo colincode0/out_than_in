@@ -5,6 +5,8 @@ import Image from "next/image";
 import { Post } from "@/app/types";
 import { useSession } from "next-auth/react";
 import DeleteConfirmationModal from "@/app/components/DeleteConfirmationModal";
+import CommentForm from "@/app/components/CommentForm";
+import CommentList from "@/app/components/CommentList";
 import { useRouter } from "next/navigation";
 
 export default function PostPage({
@@ -19,6 +21,7 @@ export default function PostPage({
   const [error, setError] = useState<string | null>(null);
   const [editingCaption, setEditingCaption] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [commentRefreshTrigger, setCommentRefreshTrigger] = useState(0);
   const { id } = use(params);
 
   useEffect(() => {
@@ -77,6 +80,31 @@ export default function PostPage({
     } catch (err) {
       console.error("Error updating caption:", err);
       alert("Failed to update caption. Please try again.");
+    }
+  };
+
+  const handleCommentAdded = (refreshTrigger?: number) => {
+    // Refresh the post to update comment count
+    if (post) {
+      fetch(`/api/posts?id=${post.id}`)
+        .then((response) => response.json())
+        .then((data) => setPost(data))
+        .catch(console.error);
+    }
+
+    // Trigger comment list refresh
+    if (refreshTrigger) {
+      setCommentRefreshTrigger(refreshTrigger);
+    }
+  };
+
+  const handleCommentDeleted = () => {
+    // Refresh the post to update comment count
+    if (post) {
+      fetch(`/api/posts?id=${post.id}`)
+        .then((response) => response.json())
+        .then((data) => setPost(data))
+        .catch(console.error);
     }
   };
 
@@ -232,6 +260,14 @@ export default function PostPage({
               </div>
             </div>
           )}
+
+          {/* Comments Section */}
+          <CommentList
+            postId={post.id}
+            onCommentDeleted={handleCommentDeleted}
+            refreshTrigger={commentRefreshTrigger}
+          />
+          <CommentForm postId={post.id} onCommentAdded={handleCommentAdded} />
         </div>
 
         <DeleteConfirmationModal

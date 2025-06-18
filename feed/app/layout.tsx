@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Scrolls.nyc",
+  title: "Scrolls",
   description: "In Progress...",
 };
 

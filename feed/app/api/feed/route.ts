@@ -33,8 +33,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ posts: [] });
     }
 
-    // Get all posts from followed users
-    const allPosts: Post[] = [];
+    // Get all posts from followed users with comment counts
+    const allPosts: (Post & { commentCount: number })[] = [];
     for (const followedUsername of following) {
       const postIds = await kv.zrange(`user:${followedUsername}:posts`, 0, -1, {
         rev: true,
@@ -43,7 +43,12 @@ export async function GET(request: Request) {
       for (const postId of postIds) {
         const post = await kv.get<Post>(`post:${postId}`);
         if (post && !post.hidden) {
-          allPosts.push(post);
+          // Get comment count for this post
+          const commentCount = await kv.zcard(`post:${postId}:comments`);
+          allPosts.push({
+            ...post,
+            commentCount,
+          });
         }
       }
     }

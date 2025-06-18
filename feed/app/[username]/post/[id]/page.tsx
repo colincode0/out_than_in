@@ -21,6 +21,7 @@ export default function PostPage({
   const [error, setError] = useState<string | null>(null);
   const [editingCaption, setEditingCaption] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [commentRefreshTrigger, setCommentRefreshTrigger] = useState(0);
   const { id } = use(params);
 
   useEffect(() => {
@@ -82,13 +83,18 @@ export default function PostPage({
     }
   };
 
-  const handleCommentAdded = () => {
+  const handleCommentAdded = (refreshTrigger?: number) => {
     // Refresh the post to update comment count
     if (post) {
       fetch(`/api/posts?id=${post.id}`)
         .then((response) => response.json())
         .then((data) => setPost(data))
         .catch(console.error);
+    }
+
+    // Trigger comment list refresh
+    if (refreshTrigger) {
+      setCommentRefreshTrigger(refreshTrigger);
     }
   };
 
@@ -259,6 +265,7 @@ export default function PostPage({
           <CommentList
             postId={post.id}
             onCommentDeleted={handleCommentDeleted}
+            refreshTrigger={commentRefreshTrigger}
           />
           <CommentForm postId={post.id} onCommentAdded={handleCommentAdded} />
         </div>

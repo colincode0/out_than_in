@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 
 interface CommentFormProps {
   postId: string;
-  onCommentAdded: () => void;
+  onCommentAdded: (refreshTrigger?: number) => void;
 }
 
 export default function CommentForm({
@@ -41,7 +41,7 @@ export default function CommentForm({
       }
 
       setContent("");
-      onCommentAdded();
+      onCommentAdded(Date.now());
     } catch (err) {
       console.error("Error adding comment:", err);
       setError(err instanceof Error ? err.message : "Failed to add comment");

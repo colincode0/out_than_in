@@ -81,6 +81,14 @@ export async function POST(request: Request) {
     const email = session.user.email;
     const now = new Date().toISOString();
 
+    // Check username length
+    if (!username || username.length < 5) {
+      return NextResponse.json(
+        { error: "Username must be at least 5 characters long" },
+        { status: 400 }
+      );
+    }
+
     // Check for reserved usernames
     const reservedUsernames = ["explore", "leaderboard", "feed"];
     if (reservedUsernames.includes(username.toLowerCase())) {

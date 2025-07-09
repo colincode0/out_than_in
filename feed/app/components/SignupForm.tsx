@@ -104,8 +104,9 @@ export default function SignupForm() {
                   : "border-gray-700"
               } bg-background text-foreground`}
               required
+              minLength={5}
               pattern="^[a-zA-Z0-9_]+$"
-              title="Username can only contain letters, numbers, and underscores"
+              title="Username must be at least 5 characters and can only contain letters, numbers, and underscores"
             />
             {isCheckingUsername && (
               <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -145,6 +146,7 @@ export default function SignupForm() {
           disabled={
             isSubmitting ||
             !username.trim() ||
+            username.trim().length < 5 ||
             isCheckingUsername ||
             isUsernameAvailable === false
           }

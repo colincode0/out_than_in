@@ -99,6 +99,14 @@ export async function POST(request: Request) {
       );
     }
 
+    if (content.length > 700) {
+      console.log("Content too long:", content.length);
+      return NextResponse.json(
+        { error: "Text posts must be 700 characters or less" },
+        { status: 400 }
+      );
+    }
+
     const timestamp = Date.now();
     const id = `text_${timestamp}_${Math.random()
       .toString(36)
@@ -258,6 +266,15 @@ export async function PATCH(request: Request) {
       return NextResponse.json(
         { error: "Not authorized to update this post" },
         { status: 403 }
+      );
+    }
+
+    // Check caption length if updating caption
+    if (typeof caption === "string" && caption.length > 400) {
+      console.log("Caption too long:", caption.length);
+      return NextResponse.json(
+        { error: "Captions must be 400 characters or less" },
+        { status: 400 }
       );
     }
 

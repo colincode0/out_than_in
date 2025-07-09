@@ -29,6 +29,15 @@ export async function POST(request: Request) {
     const captureDate = formData.get("captureDate") as string;
     const type = formData.get("type") as string;
 
+    // Check caption length if provided
+    if (caption && caption.length > 400) {
+      console.log("Caption too long:", caption.length);
+      return NextResponse.json(
+        { error: "Captions must be 400 characters or less" },
+        { status: 400 }
+      );
+    }
+
     if (!file) {
       console.log("No file provided in request");
       return NextResponse.json({ error: "No file provided" }, { status: 400 });

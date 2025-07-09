@@ -58,6 +58,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (content.length > 300) {
+      return NextResponse.json(
+        { error: "Comment must be 300 characters or less" },
+        { status: 400 }
+      );
+    }
+
     // Verify the post exists
     const post = await kv.get<Post>(`post:${postId}`);
     if (!post) {

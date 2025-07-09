@@ -27,16 +27,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get list of users being followed
+    // Get list of users being followed (including the user themselves)
     const following = await kv.smembers(`user:${profile.email}:following`);
-    if (following.length === 0) {
-      return NextResponse.json({ posts: [] });
-    }
+    const usersToFetch = [...following, username]; // Include the user's own posts
 
-    // Get all posts from followed users with comment counts
+    // Get all posts from followed users and the user themselves with comment counts
     const allPosts: (Post & { commentCount: number })[] = [];
-    for (const followedUsername of following) {
-      const postIds = await kv.zrange(`user:${followedUsername}:posts`, 0, -1, {
+    for (const userToFetch of usersToFetch) {
+      const postIds = await kv.zrange(`user:${userToFetch}:posts`, 0, -1, {
         rev: true,
       });
 

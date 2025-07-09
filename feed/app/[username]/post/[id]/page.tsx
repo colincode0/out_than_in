@@ -2,12 +2,13 @@
 
 import { useState, useEffect, use } from "react";
 import Image from "next/image";
-import { Post } from "@/app/types";
+import { Post, UserProfile } from "@/app/types";
 import { useSession } from "next-auth/react";
 import DeleteConfirmationModal from "@/app/components/DeleteConfirmationModal";
 import CommentForm from "@/app/components/CommentForm";
 import CommentList from "@/app/components/CommentList";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function PostPage({
   params,
@@ -17,6 +18,7 @@ export default function PostPage({
   const { data: session } = useSession();
   const router = useRouter();
   const [post, setPost] = useState<Post | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingCaption, setEditingCaption] = useState<string | null>(null);
@@ -33,6 +35,17 @@ export default function PostPage({
         }
         const data = await response.json();
         setPost(data);
+
+        // Fetch profile data for the post author
+        if (data.username) {
+          const profileResponse = await fetch(
+            `/api/user?username=${data.username}`
+          );
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            setProfile(profileData.profile);
+          }
+        }
       } catch (err) {
         console.error("Error fetching post:", err);
         setError(err instanceof Error ? err.message : "Failed to fetch post");
@@ -181,7 +194,25 @@ export default function PostPage({
                   className="object-cover"
                 />
               </div>
-              <div className="flex flex-col gap-1 text-gray-500 px-4 py-3 border-t border-gray-800">
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="relative w-8 h-8 bg-gray-800">
+                    {profile?.profilePicture ? (
+                      <Image
+                        src={profile.profilePicture}
+                        alt={`${post.username}'s profile picture`}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : null}
+                  </div>
+                  <Link
+                    href={`/${post.username}`}
+                    className="font-medium hover:text-gray-300 transition-colors"
+                  >
+                    @{post.username}
+                  </Link>
+                </div>
                 {editingCaption !== null ? (
                   <div className="flex flex-col gap-2">
                     <textarea
@@ -240,7 +271,7 @@ export default function PostPage({
                     )}
                   </>
                 )}
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 text-gray-500 mt-2">
                   <p>Posted: {formatDate(post.postDate)}</p>
                   {post.captureDate && (
                     <p>Taken: {formatDate(post.captureDate)}</p>
@@ -251,6 +282,24 @@ export default function PostPage({
           ) : (
             <div className="flex flex-col">
               <div className="p-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="relative w-8 h-8 bg-gray-800">
+                    {profile?.profilePicture ? (
+                      <Image
+                        src={profile.profilePicture}
+                        alt={`${post.username}'s profile picture`}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : null}
+                  </div>
+                  <Link
+                    href={`/${post.username}`}
+                    className="font-medium hover:text-gray-300 transition-colors"
+                  >
+                    @{post.username}
+                  </Link>
+                </div>
                 <p className="text-lg whitespace-pre-wrap">{post.content}</p>
               </div>
               <div className="px-4 py-3 border-t border-gray-800">

@@ -11,7 +11,7 @@ and then for each user it has a # like #1582
 tags & notifications
 search case non dependent
 own posts in following feed 
-audio clip in biuo
+audio clip in bio
 story feed
 stories
 set background color of profile

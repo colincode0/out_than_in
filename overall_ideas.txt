@@ -6,14 +6,13 @@ and then for each user it has a # like #1582
 - character limit on 
     - text posts
     - captions
-    - comments
 
 tags & notifications
 search case non dependent
-own posts in following feed 
-audio clip in bio
+audio clip in biuo
+set background color of profile
+sign up to comment
+
+
 story feed
 stories
-set background color of profile
-single post needs to be able to click to user
-sign up to comment

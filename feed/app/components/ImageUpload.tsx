@@ -18,6 +18,7 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
   const [exifData, setExifData] = useState<{ captureDate: string | null }>({
     captureDate: null,
   });
+  const MAX_CAPTION_LENGTH = 400;
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -238,13 +239,19 @@ export default function ImageUpload({ onUploadComplete }: ImageUploadProps) {
           </div>
 
           <div className="flex flex-col gap-2 w-full">
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              placeholder="Add a caption..."
-              className="w-full p-2 rounded-lg border border-gray-700 bg-background text-foreground resize-none min-h-[80px]"
-              disabled={isUploading}
-            />
+            <div className="relative">
+              <textarea
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                placeholder="Add a caption..."
+                className="w-full p-2 rounded-lg border border-gray-700 bg-background text-foreground resize-none min-h-[80px]"
+                disabled={isUploading}
+                maxLength={MAX_CAPTION_LENGTH}
+              />
+              <div className="absolute bottom-2 right-2 text-xs text-gray-500">
+                {caption.length}/{MAX_CAPTION_LENGTH}
+              </div>
+            </div>
 
             {exifData.captureDate && (
               <p className="text-sm text-gray-500">

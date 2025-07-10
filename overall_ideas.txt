@@ -3,15 +3,12 @@ no display of followers, what if there was a leaderboard like top followed accou
 and then for each user it has a # like #1582
  - which would mean the #1582 most followed account
 
-- character limit on 
-    - text posts
-    - captions
+
 
 tags & notifications
 search case non dependent
-audio clip in biuo
+audio clip in bio
 set background color of profile
-sign up to comment
 
 
 story feed

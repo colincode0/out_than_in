@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function UpdatesPage() {
   const { data: session, status } = useSession();
@@ -39,9 +40,16 @@ export default function UpdatesPage() {
           <div className="bg-background border border-gray-800 rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Hello</h2>
             <div className="text-gray-300 mb-4">
-              I am @v and I am sick of how much the internet has deteriorated
-              since I was a kid. When I was young the internet was this wild
-              west landscape of self expression. A place where people could be
+              I am{" "}
+              <Link
+                href="/v"
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
+                @v
+              </Link>{" "}
+              and I am sick of how much the internet has deteriorated since I
+              was a kid. When I was young the internet was this wild west
+              landscape of self expression. A place where people could be
               themselves more than ever before in an ironically anonymous way.
               With beheading videos and the advent of easily accessible
               pornography, along with the absolute gem that is wikipedia, I

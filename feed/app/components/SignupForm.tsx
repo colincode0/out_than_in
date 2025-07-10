@@ -23,6 +23,12 @@ export default function SignupForm() {
         return;
       }
 
+      // Don't check availability if username is too short
+      if (username.trim().length < 5) {
+        setIsUsernameAvailable(null);
+        return;
+      }
+
       setIsCheckingUsername(true);
       try {
         const response = await fetch(`/api/user?username=${username}`);
@@ -97,7 +103,9 @@ export default function SignupForm() {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Choose a username"
               className={`w-full p-2 rounded-lg border ${
-                isUsernameAvailable === false
+                username.trim().length > 0 && username.trim().length < 5
+                  ? "border-red-500"
+                  : isUsernameAvailable === false
                   ? "border-red-500"
                   : isUsernameAvailable === true
                   ? "border-green-500"
@@ -114,6 +122,11 @@ export default function SignupForm() {
               </div>
             )}
           </div>
+          {username.trim().length > 0 && username.trim().length < 5 && (
+            <p className="text-red-500 text-sm mt-1">
+              Username must be at least 5 characters
+            </p>
+          )}
           {isUsernameAvailable === false && (
             <p className="text-red-500 text-sm mt-1">
               This username is already taken

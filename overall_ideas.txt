@@ -13,3 +13,5 @@ set background color of profile
 
 story feed
 stories
+
+looks like photos upload to blob before theyre posted

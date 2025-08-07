@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Post, UserProfile } from "@/app/types";
+import TextWithMentions from "@/app/components/TextWithMentions";
 
 export default function LatestPostsPage() {
   const { data: session } = useSession();
@@ -154,11 +155,13 @@ export default function LatestPostsPage() {
                   </Link>
                 </div>
                 {post.type === "image" && post.caption && (
-                  <p className="text-gray-300 mb-2">{post.caption}</p>
+                  <p className="text-gray-300 mb-2">
+                    <TextWithMentions text={post.caption} />
+                  </p>
                 )}
                 {post.type === "text" && (
                   <p className="text-gray-300 whitespace-pre-wrap">
-                    {post.content}
+                    <TextWithMentions text={post.content} />
                   </p>
                 )}
                 <div className="flex flex-col gap-1 text-sm text-gray-500 mt-2">

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { Comment, UserProfile } from "@/app/types";
+import TextWithMentions from "@/app/components/TextWithMentions";
 import DeleteConfirmationModal from "@/app/components/DeleteConfirmationModal";
 
 interface CommentListProps {
@@ -26,7 +27,7 @@ export default function CommentList({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       const response = await fetch(`/api/comments?postId=${postId}`);
       if (!response.ok) {
@@ -63,11 +64,11 @@ export default function CommentList({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [postId]);
 
   useEffect(() => {
     fetchComments();
-  }, [postId, refreshTrigger]);
+  }, [postId, refreshTrigger, fetchComments]);
 
   const handleDeleteClick = (commentId: string) => {
     setCommentToDelete(commentId);
@@ -174,7 +175,7 @@ export default function CommentList({
                         </span>
                       </div>
                       <p className="text-gray-300 whitespace-pre-wrap">
-                        {comment.content}
+                        <TextWithMentions text={comment.content} />
                       </p>
                     </div>
                     {isOwnComment && (

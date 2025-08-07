@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Image from "next/image";
 import { Post, UserProfile } from "@/app/types";
+import TextWithMentions from "@/app/components/TextWithMentions";
 import { useSession } from "next-auth/react";
 import DeleteConfirmationModal from "@/app/components/DeleteConfirmationModal";
 import CommentForm from "@/app/components/CommentForm";
@@ -241,7 +242,7 @@ export default function PostPage({
                     {post.caption && (
                       <div className="flex justify-between items-start gap-2">
                         <p className="text-gray-300 whitespace-pre-wrap flex-1">
-                          {post.caption}
+                          <TextWithMentions text={post.caption} />
                         </p>
                         {isOwnPost && (
                           <button
@@ -300,7 +301,9 @@ export default function PostPage({
                     @{post.username}
                   </Link>
                 </div>
-                <p className="text-lg whitespace-pre-wrap">{post.content}</p>
+                <p className="text-lg whitespace-pre-wrap">
+                  <TextWithMentions text={post.content} />
+                </p>
               </div>
               <div className="px-4 py-3 border-t border-gray-800">
                 <p className="text-sm text-gray-500">

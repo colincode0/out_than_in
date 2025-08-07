@@ -98,7 +98,7 @@ export default function UpdatesPage() {
           </div>
 
           {/* Software updates will go here in chronological order */}
-          <div className="bg-background border border-gray-800 rounded-lg p-6">
+          {/* <div className="bg-background border border-gray-800 rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Latest Updates</h2>
             <p className="text-gray-300 mb-4">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
@@ -153,7 +153,7 @@ export default function UpdatesPage() {
               eligendi optio cumque nihil impedit quo minus id quod maxime
               placeat facere possimus.
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

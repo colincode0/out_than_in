@@ -47,29 +47,27 @@ export default function UpdatesPage() {
               >
                 @v
               </Link>{" "}
-              and I am sick of how much the internet has deteriorated since I
+              and I am tired of how much the internet has deteriorated since I
               was a kid. When I was young the internet was this wild west
               landscape of self expression. A place where people could be
-              themselves more than ever before in an ironically anonymous way.
-              With beheading videos and the advent of easily accessible
-              pornography, along with the absolute gem that is wikipedia, I
-              think it was a transformative turning point in contemporary
+              themselves more than ever before, in an ironically anonymous way.
+              I think it was a transformative turning point in contemporary
               history where children grew up more aware of the complexity,
-              atrocity, and beauty of the world with a deeper understanding than
-              their parents had from the entirety of their lives growing into
-              adults. This is no fault of the parents, but for some reason
-              adults seem to let curiosity slip away from them when it&apos;s
-              likely the strongest tool to bring youthfulness to the mind.
+              atrocity, and beauty in the world than their parents. This is no
+              fault of the parents, but for some reason adults seem to let
+              curiosity slip away from them when it&apos;s likely the strongest
+              tool to bring youthfulness to the mind. The internet is the
+              infinite slip n slide for curiosity.
             </div>
             <div className="text-gray-300 mb-4">
-              I&apos;m sick of ads and curated feeds. We pay for things we use
-              on the internet now, and I would be hard pressed to find someone
-              who doesn&apos;t feel like creative content in this world is
-              merging more and more with advertising. The goal of this site is
-              simple. A chronological social media with no ads or recommended
-              posts. Join with a group of friends and see what they post. When
-              you scroll down to the post you last saw, you&apos;ve seen
-              everything your friends have posted since you last checked.
+              I&apos;m sick of ads and curated feeds, aren&apos;t you? We pay
+              for things we use on the internet now, and I would be hard pressed
+              to find someone who doesn&apos;t feel like creative content in
+              this world is merging more and more with advertising. The goal of
+              this site is simple. A chronological social media with no ads or
+              recommended posts. Join with a group of friends and see what they
+              post. When you scroll down to the post you last saw, you&apos;ve
+              seen everything your friends have posted since you last checked.
               That&apos;s it.
             </div>
             <div className="text-gray-100 mb-4">
@@ -79,21 +77,13 @@ export default function UpdatesPage() {
               it becomes unsustainable or flops.
             </div>
             <div className="text-gray-300 mb-4">
-              There will be moderation. I admire some libertarian philosophies
-              but for the most part I think true libertarians are juvenile and
-              ignore their own dependence on structures, both good and bad. Elon
-              Musk is a piece of shit and he ruined twitter, so if you&apos;re
-              looking for quasi validation that free speech is represented or
-              upheld by a private company I think you should spend some time
-              thinking about what free speech means in regard to the private
-              sector. Some ideas aren&apos;t simple, and neither will be
-              moderating this site if people actually use it. This is my website
-              and I will do with it what I want, but I will try to make
-              guidelines clear so that no one gets thrashed doing something they
-              assumed was ok.
+              Some ideas aren&apos;t simple, and neither will be moderating this
+              site if people actually use it. This is my website and I will do
+              with it what I want, but I will try to make guidelines clear so
+              that no one gets thrashed doing something they assumed was ok.
             </div>
             <div className="text-gray-300">
-              Go watch Exit Through The Gift Shop.
+              Go watch Exit Through The Gift Shop or Pirate Radio.
             </div>
           </div>
 

@@ -60,14 +60,14 @@ export default function UpdatesPage() {
               infinite slip n slide for curiosity.
             </div>
             <div className="text-gray-300 mb-4">
-              I&apos;m sick of ads and curated feeds, aren&apos;t you? We pay
-              for things we use on the internet now, and I would be hard pressed
-              to find someone who doesn&apos;t feel like creative content in
-              this world is merging more and more with advertising. The goal of
-              this site is simple. A chronological social media with no ads or
-              recommended posts. Join with a group of friends and see what they
-              post. When you scroll down to the post you last saw, you&apos;ve
-              seen everything your friends have posted since you last checked.
+              I&apos;m sick of ads and curated feeds. We pay for things we use
+              on the internet now, and I would be hard pressed to find someone
+              who doesn&apos;t feel like creative content in this world is
+              merging more and more with advertising. The goal of this site is
+              simple. A chronological social media with no ads or recommended
+              posts. Join with a group of friends and see what they post. When
+              you scroll down to the post you last saw, you&apos;ve seen
+              everything your friends have posted since you last checked.
               That&apos;s it.
             </div>
             <div className="text-gray-100 mb-4">

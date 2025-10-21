@@ -1,21 +1,6 @@
 Overall goal:
 
-Our goal is to make a homegrown simple like instagram like app. We want to be able to upload images and text, and have them in a chronological feed with pagination.
-
-We have both vercel blob storage and vercel kv connected with these env variables below
-GOOGLE_ID
-GOOGLE_SECRET
-ADMIN_EMAIL
-NEXTAUTH_SECRET
-BLOB_READ_WRITE_TOKEN
-NEXTAUTH_URL
-KV_URL
-KV_REST_API_URL
-KV_REST_API_TOKEN
-KV_REST_API_READ_ONLY_TOKEN
-REDIS_URL
-GOOGLE_CLIENT_ID
-GOOGLE_CLIENT_SECRET
+Our goal is to make a homegrown simple app. We want to be able to upload images and text, and have them in a chronological feed with pagination.
 
 We want simple google auth, and we want individuals to be able to create accounts with username and bio (linked in the backend to their google login email)
 On start, we want to go to the / route and see sign up with google and a sign in button - if they click sign up they log in with google auth, then are taken to a page to set their username (which checks if one already exists before creating) and bio

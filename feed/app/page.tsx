@@ -21,7 +21,7 @@ export default function Home() {
             const data = await response.json();
             if (data.profile) {
               setHasProfile(true);
-              router.push(`/${data.profile.username}/feed`);
+              router.push(`/explore/latest-posts`);
               return;
             }
           }

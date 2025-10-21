@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authConfig } from "@/app/auth";
 import { kv } from "@vercel/kv";
 import { Post, UserProfile } from "@/app/types";
+import { POSTS_PER_PAGE } from "@/app/constants";
 
 export async function GET(request: Request) {
   try {
@@ -13,6 +14,10 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const username = searchParams.get("username");
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(
+      searchParams.get("limit") || POSTS_PER_PAGE.toString()
+    );
 
     if (!username) {
       return NextResponse.json(
@@ -31,32 +36,77 @@ export async function GET(request: Request) {
     const following = await kv.smembers(`user:${profile.email}:following`);
     const usersToFetch = [...following, username]; // Include the user's own posts
 
-    // Get all posts from followed users and the user themselves with comment counts
+    if (!usersToFetch.length) {
+      return NextResponse.json({
+        posts: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      });
+    }
+
+    // Get all posts from followed users with batched database calls
     const allPosts: (Post & { commentCount: number })[] = [];
+
+    // Collect all post IDs first
+    const allPostIds: string[] = [];
     for (const userToFetch of usersToFetch) {
       const postIds = await kv.zrange(`user:${userToFetch}:posts`, 0, -1, {
         rev: true,
       });
-
-      for (const postId of postIds) {
-        const post = await kv.get<Post>(`post:${postId}`);
-        if (post && !post.hidden) {
-          // Get comment count for this post
-          const commentCount = await kv.zcard(`post:${postId}:comments`);
-          allPosts.push({
-            ...post,
-            commentCount,
-          });
-        }
-      }
+      allPostIds.push(...(postIds as string[]));
     }
+
+    // Batch fetch all posts
+    const postPromises = allPostIds.map((postId) =>
+      kv.get<Post>(`post:${postId}`)
+    );
+    const posts = await Promise.all(postPromises);
+
+    // Batch fetch all comment counts
+    const commentCountPromises = allPostIds.map((postId) =>
+      kv.zcard(`post:${postId}:comments`)
+    );
+    const commentCounts = await Promise.all(commentCountPromises);
+
+    // Combine posts with comment counts
+    posts.forEach((post, index) => {
+      if (post && !post.hidden) {
+        allPosts.push({
+          ...post,
+          commentCount: commentCounts[index],
+        });
+      }
+    });
 
     // Sort posts by date (newest first)
     allPosts.sort(
       (a, b) => new Date(b.postDate).getTime() - new Date(a.postDate).getTime()
     );
 
-    return NextResponse.json({ posts: allPosts });
+    // Calculate pagination
+    const total = allPosts.length;
+    const totalPages = Math.ceil(total / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedPosts = allPosts.slice(startIndex, endIndex);
+
+    return NextResponse.json({
+      posts: paginatedPosts,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    });
   } catch (error) {
     console.error("Error in GET /api/feed:", error);
     return NextResponse.json(

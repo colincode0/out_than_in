@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Scrolls.nyc
 
-## Getting Started
+A modern, minimalist photo and text sharing platform built with Next.js. Share moments with your followers through a clean, chronological feed.
 
-First, run the development server:
+## Overview
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Scrolls.nyc is a social media application that emphasizes simplicity. Users can share images with captions or text-only posts, follow other users, and engage with content through comments.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Key Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 🔐 Authentication & Profiles
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Google OAuth** integration for secure sign-up and login
+- **Custom profiles** with unique usernames and bios
+- **Profile pages** showcasing user posts in chronological order
 
-## Learn More
+### 📸 Content Creation
 
-To learn more about Next.js, take a look at the following resources:
+- **Image posts** with captions
+  - Metadata stripping for privacy
+  - Image compression and optimization before upload
+- **Text-only posts** for quick updates
+- **Edit and delete** functionality for your own posts
+- **QR code generation** for easy profile sharing
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 🌐 Social Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Follow system** to curate your feed
+- **Personalized feed** showing posts from followed users
+- **Comment system** for engaging with posts
+- **User mentions** support in posts and comments
+- **Explore section** with:
+  - Latest posts across the platform
+  - Latest user sign-ups
 
-## Deploy on Vercel
+### 👤 Profile Management
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Profile customization** with username and bio
+- **Settings page** for account management
+- **Following page** to view and manage followed accounts
+- **Public profiles** viewable by anyone (with posting/editing restricted to owners)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tech Stack
+
+- **Framework**: [Next.js 15](https://nextjs.org/) with App Router
+- **Runtime**: React 19
+- **Authentication**: NextAuth.js with Google OAuth
+- **Database**: [Upstash Redis](https://upstash.com/) (via Vercel KV)
+- **Storage**: [Vercel Blob Storage](https://vercel.com/docs/storage/vercel-blob) for images
+- **Styling**: Tailwind CSS 4
+- **Image Processing**: Sharp & Exifr
+- **TypeScript**: Full type safety throughout
+
+## Features in Detail
+
+### Image Upload Flow
+
+1. User selects an image
+2. EXIF metadata extracted to capture original photo date
+3. Image cropping interface for optimal framing
+4. Metadata stripped for privacy
+5. Image compressed and optimized
+6. Uploaded to Vercel Blob Storage
+7. Post metadata saved to Redis/KV
+
+### Feed Algorithm
+
+Posts are displayed in **reverse chronological order** based on when they were posted. The feed shows content from users you follow, creating a personalized experience.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.

@@ -39,6 +39,18 @@ export default function UpdatesPage() {
           {/* Pinned message from @v */}
           <div className="bg-background border border-gray-800 rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Hello</h2>
+
+            <div className="text-gray-300 mb-4">
+              Made by{" "}
+              <Link
+                href="/v"
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
+                @v
+              </Link>{" "}
+            </div>
+            {/* 
+
             <div className="text-gray-300 mb-4">
               I am{" "}
               <Link
@@ -84,7 +96,7 @@ export default function UpdatesPage() {
             </div>
             <div className="text-gray-300">
               Go watch Exit Through The Gift Shop or Pirate Radio.
-            </div>
+            </div> */}
           </div>
 
           {/* Software updates will go here in chronological order */}

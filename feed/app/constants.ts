@@ -5,6 +5,7 @@ export const PAGINATION_DEBOUNCE_MS = 300;
 // API endpoints
 export const API_ENDPOINTS = {
   LATEST_POSTS: "/api/latest-posts",
+  PUBLIC_LATEST_POSTS: "/api/public/latest-posts",
   USER_PROFILE: "/api/user",
   FEED: "/api/feed",
 } as const;
